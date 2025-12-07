@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { AlertTriangle, Key, ShieldCheck, Zap } from "lucide-react";
 import {
   Bar,
@@ -18,7 +19,8 @@ import {
 
 import { Card } from "@acme/ui/card";
 
-import { INITIAL_KEYS, USAGE_DATA } from "~/lib/mock-data";
+import { useTRPC } from "~/trpc/react";
+import { USAGE_DATA } from "~/lib/mock-data";
 
 const languageData = [
   { name: "Python", value: 5400 },
@@ -35,6 +37,9 @@ const COLORS = [
 ];
 
 export default function UsageView() {
+  const trpc = useTRPC();
+  const { data: apiKeys } = useSuspenseQuery(trpc.apiKey.list.queryOptions());
+
   const [selectedKeyId, setSelectedKeyId] = useState<string>("all");
 
   return (
@@ -58,7 +63,7 @@ export default function UsageView() {
             className="bg-card border-border text-foreground focus:border-primary focus:ring-ring w-full min-w-[200px] appearance-none rounded-lg border py-2 pr-8 pl-9 text-sm focus:ring-1 focus:outline-none sm:w-auto"
           >
             <option value="all">All API Keys</option>
-            {INITIAL_KEYS.map((key) => (
+            {apiKeys.map((key) => (
               <option key={key.id} value={key.id}>
                 {key.name} ({key.prefix.slice(0, 8)}...)
               </option>
@@ -246,6 +251,6 @@ export default function UsageView() {
           </ResponsiveContainer>
         </Card>
       </div>
-    </div>
+    </div >
   );
 }

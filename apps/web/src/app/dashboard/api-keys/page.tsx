@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import {
   Copy,
   MoreHorizontal,
   Plus,
@@ -33,40 +38,67 @@ import {
 } from "@acme/ui/dialog";
 import { Input } from "@acme/ui/input";
 import { Label } from "@acme/ui/label";
+import { toast } from "@acme/ui/toast";
 
-import { INITIAL_KEYS } from "../../../lib/mock-data";
-import { ApiKey } from "../../../lib/types";
+import { useTRPC } from "~/trpc/react";
 
 export default function ApiKeysView() {
-  const [keys, setKeys] = useState<ApiKey[]>(INITIAL_KEYS);
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const { data: keys } = useSuspenseQuery(trpc.apiKey.list.queryOptions());
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revokeKeyId, setRevokeKeyId] = useState<string | null>(null);
+  const [newlyCreatedKey, setNewlyCreatedKey] = useState<string | null>(null);
+
+  const createKeyMutation = useMutation(
+    trpc.apiKey.create.mutationOptions({
+      onSuccess: async (data) => {
+        setNewKeyName("");
+        setIsCreateModalOpen(false);
+        setNewlyCreatedKey(data.key);
+        await queryClient.invalidateQueries(trpc.apiKey.pathFilter());
+        toast.success("API key created successfully!");
+      },
+      onError: (err) => {
+        toast.error(
+          err.data?.code === "UNAUTHORIZED"
+            ? "You must be logged in to create API keys"
+            : "Failed to create API key",
+        );
+      },
+    }),
+  );
+
+  const revokeKeyMutation = useMutation(
+    trpc.apiKey.revoke.mutationOptions({
+      onSuccess: async () => {
+        setRevokeKeyId(null);
+        await queryClient.invalidateQueries(trpc.apiKey.pathFilter());
+        toast.success("API key revoked successfully");
+      },
+      onError: (err) => {
+        toast.error(
+          err.data?.code === "UNAUTHORIZED"
+            ? "You must be logged in to revoke API keys"
+            : "Failed to revoke API key",
+        );
+      },
+    }),
+  );
 
   const handleCreateKey = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyName.trim()) return;
 
-    const newKey: ApiKey = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newKeyName,
-      prefix: `sk_live_${Math.random().toString(36).substr(2, 5)}...`,
-      createdAt: new Date().toISOString().split("T")[0] ?? "",
-      lastUsed: "Never",
-      status: "active",
-    };
-
-    setKeys([newKey, ...keys]);
-    setNewKeyName("");
-    setIsCreateModalOpen(false);
+    createKeyMutation.mutate({ name: newKeyName });
   };
 
   const handleRevokeKey = (id: string) => {
-    setKeys(
-      keys.map((k) => (k.id === id ? { ...k, status: "revoked" as const } : k)),
-    );
-    setRevokeKeyId(null);
+    revokeKeyMutation.mutate({ id });
   };
 
   const copyToClipboard = async (text: string, id: string) => {
@@ -74,11 +106,34 @@ export default function ApiKeysView() {
       await navigator.clipboard.writeText(text);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
+      toast.success("Copied to clipboard!");
     } catch (err) {
-      // Fallback for older browsers
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
+      toast.error("Failed to copy to clipboard");
     }
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return "Never";
+    return new Date(date).toLocaleDateString();
+  };
+
+  const formatLastUsed = (date: Date | null) => {
+    if (!date) return "Never";
+
+    const now = new Date();
+    const lastUsed = new Date(date);
+    const diffMs = now.getTime() - lastUsed.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+    return formatDate(date);
   };
 
   return (
@@ -158,10 +213,10 @@ export default function ApiKeysView() {
                     </div>
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm">
-                    {key.createdAt}
+                    {formatDate(key.createdAt)}
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm">
-                    {key.lastUsed}
+                    {formatLastUsed(key.lastUsedAt)}
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -203,6 +258,57 @@ export default function ApiKeysView() {
         </div>
       </Card>
 
+      {/* New Key Created Dialog */}
+      <Dialog
+        open={!!newlyCreatedKey}
+        onOpenChange={() => setNewlyCreatedKey(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>API Key Created Successfully!</DialogTitle>
+            <DialogDescription>
+              Make sure to copy your API key now. You won't be able to see it
+              again!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Your API Key</Label>
+              <div className="bg-muted mt-2 flex items-center gap-2 rounded-md border p-3">
+                <code className="text-foreground flex-1 font-mono text-sm break-all">
+                  {newlyCreatedKey}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() =>
+                    newlyCreatedKey &&
+                    copyToClipboard(newlyCreatedKey, "new-key")
+                  }
+                >
+                  {copiedId === "new-key" ? (
+                    <span className="text-xs text-emerald-500">✓</span>
+                  ) : (
+                    <Copy size={16} />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-md border border-yellow-500/20 bg-yellow-500/10 p-3">
+              <p className="text-sm text-yellow-600 dark:text-yellow-500">
+                ⚠️ This is the only time you'll see the full key. Store it
+                securely!
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setNewlyCreatedKey(null)}>
+              I've copied my key
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Create Key Dialog */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent>
@@ -223,6 +329,7 @@ export default function ApiKeysView() {
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
                   placeholder="e.g. CI/CD Pipeline"
+                  disabled={createKeyMutation.isPending}
                 />
               </div>
             </div>
@@ -231,11 +338,15 @@ export default function ApiKeysView() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsCreateModalOpen(false)}
+                disabled={createKeyMutation.isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={!newKeyName.trim()}>
-                Create Key
+              <Button
+                type="submit"
+                disabled={!newKeyName.trim() || createKeyMutation.isPending}
+              >
+                {createKeyMutation.isPending ? "Creating..." : "Create Key"}
               </Button>
             </DialogFooter>
           </form>

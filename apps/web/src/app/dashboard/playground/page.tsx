@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Key, Play, RotateCcw, Save, Terminal } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
 import { Card } from "@acme/ui/card";
 
-import { INITIAL_KEYS } from "~/lib/mock-data";
+import { useTRPC } from "~/trpc/react";
 
 const LANGUAGES = [
   { id: "python", name: "Python 3.10", icon: "🐍" },
@@ -74,12 +75,15 @@ fn main() {
 type LanguageType = keyof typeof DEFAULT_CODE;
 
 export default function PlaygroundView() {
+  const trpc = useTRPC();
+  const { data: apiKeys } = useSuspenseQuery(trpc.apiKey.list.queryOptions());
+
   const [language, setLanguage] = useState<LanguageType>("python");
   const [code, setCode] = useState(DEFAULT_CODE.python);
   const [output, setOutput] = useState<string>("Ready to execute...");
   const [isRunning, setIsRunning] = useState(false);
 
-  const activeKeys = INITIAL_KEYS.filter((k) => k.status === "active");
+  const activeKeys = apiKeys.filter((k) => k.status === "active");
   const [selectedKeyId, setSelectedKeyId] = useState<string>(
     activeKeys.length > 0 ? activeKeys[0]!.id : "",
   );
@@ -100,7 +104,7 @@ export default function PlaygroundView() {
     setOutput("Running...");
 
     setTimeout(() => {
-      const key = INITIAL_KEYS.find((k) => k.id === selectedKeyId);
+      const key = activeKeys.find((k) => k.id === selectedKeyId);
       setOutput(
         `> Executing ${language} script with key ${key?.prefix.slice(0, 10)}...\n> Allocating sandbox...\nStarting calculation...\nFibonacci(10) = 55\nDone!\n\nProcess exited with code 0\nExecution time: 45ms`,
       );
