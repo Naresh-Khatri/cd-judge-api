@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { Check } from 'lucide-react';
+import { Check } from "lucide-react";
 
-import { Button } from '@acme/ui/button';
+import { Button } from "@acme/ui/button";
+import { Card } from "@acme/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@acme/ui/dialog';
-import { Card } from '@acme/ui/card';
+} from "@acme/ui/dialog";
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -19,49 +19,49 @@ interface PricingModalProps {
 
 const plans = [
   {
-    name: 'Free',
-    price: '$0',
-    period: '/month',
-    description: 'Perfect for trying out cd judge',
+    name: "Free",
+    price: "$0",
+    period: "/month",
+    description: "Perfect for trying out cd judge",
     features: [
-      '500k executions/month',
-      'Basic support',
-      '5 API keys',
-      '100ms avg latency',
+      "500k executions/month",
+      "Basic support",
+      "5 API keys",
+      "100ms avg latency",
     ],
-    cta: 'Current Plan',
+    cta: "Current Plan",
     highlighted: false,
   },
   {
-    name: 'Pro',
-    price: '$29',
-    period: '/month',
-    description: 'For professional developers and teams',
+    name: "Pro",
+    price: "$29",
+    period: "/month",
+    description: "For professional developers and teams",
     features: [
-      '5M executions/month',
-      'Priority support',
-      'Unlimited API keys',
-      '50ms avg latency',
-      'Advanced analytics',
-      'Custom limits',
+      "5M executions/month",
+      "Priority support",
+      "Unlimited API keys",
+      "50ms avg latency",
+      "Advanced analytics",
+      "Custom limits",
     ],
-    cta: 'Upgrade to Pro',
+    cta: "Upgrade to Pro",
     highlighted: true,
   },
   {
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    description: 'For large scale applications',
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    description: "For large scale applications",
     features: [
-      'Unlimited executions',
-      'Dedicated support',
-      'SLA guarantee',
-      '25ms avg latency',
-      'Custom integrations',
-      'Volume discounts',
+      "Unlimited executions",
+      "Dedicated support",
+      "SLA guarantee",
+      "25ms avg latency",
+      "Custom integrations",
+      "Volume discounts",
     ],
-    cta: 'Contact Sales',
+    cta: "Contact Sales",
     highlighted: false,
   },
 ];
@@ -69,25 +69,26 @@ const plans = [
 export function PricingModal({ isOpen, onClose }: PricingModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] min-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Upgrade Your Plan</DialogTitle>
           <DialogDescription>
             Choose the perfect plan for your execution needs
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className={`p-6 flex flex-col ${plan.highlighted
-                  ? 'border-primary shadow-lg shadow-primary/20'
-                  : ''
-                }`}
+              className={`flex flex-col p-6 ${
+                plan.highlighted
+                  ? "border-primary shadow-primary/20 shadow-lg"
+                  : ""
+              }`}
             >
               <div>
                 <h3 className="text-lg font-semibold">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-muted-foreground mt-1 text-sm">
                   {plan.description}
                 </p>
                 <div className="mt-4 mb-6">
@@ -95,21 +96,18 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
                   <span className="text-muted-foreground">{plan.period}</span>
                 </div>
               </div>
-              <ul className="space-y-3 flex-1">
+              <ul className="flex-1 space-y-3">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check
-                      size={16}
-                      className="text-primary flex-shrink-0"
-                    />
+                    <Check size={16} className="text-primary flex-shrink-0" />
                     <span>{feature}</span>
                   </li>
                 ))}
               </ul>
               <Button
-                className="w-full mt-6"
-                variant={plan.highlighted ? 'default' : 'outline'}
-                disabled={plan.name === 'Free'}
+                className="mt-6 w-full"
+                variant={plan.highlighted ? "default" : "outline"}
+                disabled={plan.name === "Free"}
               >
                 {plan.cta}
               </Button>
