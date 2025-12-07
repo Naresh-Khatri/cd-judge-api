@@ -2,15 +2,15 @@
 
 import { Check } from "lucide-react";
 
-import { Button } from "@acme/ui/button";
-import { Card } from "@acme/ui/card";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@acme/ui/dialog";
+} from "~/components/ui/dialog";
 
 interface PricingModalProps {
   isOpen: boolean;

@@ -1,6 +1,7 @@
-import type { LucideIcon } from 'lucide-react';
-import { Card } from '@acme/ui/card';
-import { cn } from '@acme/ui';
+import type { LucideIcon } from "lucide-react";
+
+import { Card } from "~/components/ui/card";
+import { cn } from "~/lib/utils";
 
 interface StatsCardProps {
   title: string;
@@ -10,26 +11,32 @@ interface StatsCardProps {
   icon: LucideIcon;
 }
 
-export function StatsCard({ title, value, trend, trendUp, icon: Icon }: StatsCardProps) {
+export function StatsCard({
+  title,
+  value,
+  trend,
+  trendUp,
+  icon: Icon,
+}: StatsCardProps) {
   return (
-    <Card className="p-5 hover:border-border/80 transition-colors group">
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
+    <Card className="hover:border-border/80 group p-5 transition-colors">
+      <div className="mb-4 flex items-start justify-between">
+        <div className="bg-muted group-hover:bg-muted/80 rounded-lg p-2 transition-colors">
           <Icon className="text-primary" size={20} />
         </div>
         <span
           className={cn(
-            'text-xs font-medium px-2 py-1 rounded-full',
+            "rounded-full px-2 py-1 text-xs font-medium",
             trendUp
-              ? 'bg-emerald-500/10 text-emerald-400 dark:bg-emerald-500/20'
-              : 'bg-muted text-muted-foreground',
+              ? "bg-emerald-500/10 text-emerald-400 dark:bg-emerald-500/20"
+              : "bg-muted text-muted-foreground",
           )}
         >
           {trend}
         </span>
       </div>
       <div className="space-y-1">
-        <h4 className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+        <h4 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
           {title}
         </h4>
         <p className="text-2xl font-bold">{value}</p>

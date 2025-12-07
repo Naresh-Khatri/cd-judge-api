@@ -12,10 +12,9 @@ import {
   YAxis,
 } from "recharts";
 
-import { Button } from "@acme/ui/button";
-import { Card } from "@acme/ui/card";
-
 import { StatsCard } from "~/components/stats-card";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import { CHART_DATA } from "../../lib/mock-data";
 
 export default function DashboardView() {

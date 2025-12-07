@@ -14,8 +14,8 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 
-import { cn } from "@acme/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,9 +25,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@acme/ui/alert-dialog";
-import { Button } from "@acme/ui/button";
-import { Card } from "@acme/ui/card";
+} from "~/components/ui/alert-dialog";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -35,11 +35,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@acme/ui/dialog";
-import { Input } from "@acme/ui/input";
-import { Label } from "@acme/ui/label";
-import { toast } from "@acme/ui/toast";
-
+} from "~/components/ui/dialog";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
 import { useTRPC } from "~/trpc/react";
 
 export default function ApiKeysView() {
@@ -61,7 +60,7 @@ export default function ApiKeysView() {
         setIsCreateModalOpen(false);
         setNewlyCreatedKey(data.key);
         await queryClient.invalidateQueries(trpc.apiKey.pathFilter());
-        toast.success("API key created successfully!");
+        toast("API key created successfully!");
       },
       onError: (err) => {
         toast.error(

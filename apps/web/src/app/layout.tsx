@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { cn } from "@acme/ui";
-import { ThemeProvider, ThemeToggle } from "@acme/ui/theme";
-import { Toaster } from "@acme/ui/toast";
-
+// import { ThemeProvider, ThemeToggle } from "~/components/ui/theme";
+// import { Toaster } from "~/components/ui/toast";
 import { TRPCReactProvider } from "~/trpc/react";
 
 import "~/app/styles.css";
+
+import { cn } from "~/lib/utils";
 
 export const metadata: Metadata = {
   metadataBase: new URL("http://localhost:3000"),
@@ -41,13 +41,11 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           geistMono.variable,
         )}
       >
-        <ThemeProvider>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>
-          <div className="absolute right-4 bottom-4">
-            <ThemeToggle />
-          </div>
-          <Toaster />
-        </ThemeProvider>
+        {/* <ThemeProvider> */}
+        <TRPCReactProvider>{props.children}</TRPCReactProvider>
+        <div className="absolute right-4 bottom-4">{/* <ThemeToggle /> */}</div>
+        {/* <Toaster /> */}
+        {/* </ThemeProvider> */}
       </body>
     </html>
   );

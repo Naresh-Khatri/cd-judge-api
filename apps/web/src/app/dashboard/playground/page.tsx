@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Key, Play, RotateCcw, Save, Terminal } from "lucide-react";
 
-import { Button } from "@acme/ui/button";
-import { Card } from "@acme/ui/card";
-
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 import { useTRPC } from "~/trpc/react";
 
 const LANGUAGES = [

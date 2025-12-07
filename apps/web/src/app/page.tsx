@@ -1,11 +1,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Code2, Zap, Shield, Clock } from "lucide-react";
-
-import { Button } from "@acme/ui/button";
-import { Card } from "@acme/ui/card";
+import { Clock, Code2, Shield, Zap } from "lucide-react";
 
 import { auth, getSession } from "~/auth/server";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 
 export default async function HomePage() {
   const session = await getSession();
@@ -16,26 +15,29 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-muted/20">
+    <main className="from-background to-muted/20 flex min-h-screen flex-col items-center justify-center bg-gradient-to-b">
       <div className="container flex max-w-4xl flex-col items-center gap-12 px-4 py-16">
         {/* Hero Section */}
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/20">
-            <Zap className="fill-primary-foreground text-primary-foreground" size={32} />
+          <div className="bg-primary shadow-primary/20 flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg">
+            <Zap
+              className="fill-primary-foreground text-primary-foreground"
+              size={32}
+            />
           </div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
             cd judge
           </h1>
           <p className="text-muted-foreground max-w-2xl text-lg sm:text-xl">
-            A free and open-source Judge0 alternative for code execution.
-            Run code securely in multiple programming languages.
+            A free and open-source Judge0 alternative for code execution. Run
+            code securely in multiple programming languages.
           </p>
         </div>
 
         {/* Features */}
         <div className="grid w-full gap-4 sm:grid-cols-3">
           <Card className="flex flex-col items-center gap-3 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
               <Code2 className="text-primary" size={24} />
             </div>
             <h3 className="font-semibold">Multi-Language</h3>
@@ -44,7 +46,7 @@ export default async function HomePage() {
             </p>
           </Card>
           <Card className="flex flex-col items-center gap-3 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
               <Shield className="text-primary" size={24} />
             </div>
             <h3 className="font-semibold">Secure</h3>
@@ -53,7 +55,7 @@ export default async function HomePage() {
             </p>
           </Card>
           <Card className="flex flex-col items-center gap-3 p-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
               <Clock className="text-primary" size={24} />
             </div>
             <h3 className="font-semibold">Fast</h3>

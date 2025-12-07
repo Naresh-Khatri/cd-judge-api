@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BarChart2,
   BookOpen,
@@ -11,10 +11,10 @@ import {
   Settings,
   TerminalSquare,
   Zap,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { Button } from '@acme/ui/button';
-import { cn } from '@acme/ui';
+import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 
 interface NavItem {
   href: string;
@@ -23,11 +23,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/playground', label: 'Playground', icon: TerminalSquare },
-  { href: '/dashboard/api-keys', label: 'API Keys', icon: Key },
-  { href: '/dashboard/usage', label: 'Usage & Limits', icon: BarChart2 },
-  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/playground", label: "Playground", icon: TerminalSquare },
+  { href: "/dashboard/api-keys", label: "API Keys", icon: Key },
+  { href: "/dashboard/usage", label: "Usage & Limits", icon: BarChart2 },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 interface SidebarNavProps {
@@ -38,21 +38,24 @@ export function SidebarNav({ onOpenPlans }: SidebarNavProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-full py-6 px-4">
+    <div className="flex h-full flex-col px-4 py-6">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-2 mb-10">
-        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-          <Zap className="text-primary-foreground fill-primary-foreground" size={20} />
+      <div className="mb-10 flex items-center gap-3 px-2">
+        <div className="bg-primary shadow-primary/20 flex h-10 w-10 items-center justify-center rounded-xl shadow-lg">
+          <Zap
+            className="text-primary-foreground fill-primary-foreground"
+            size={20}
+          />
         </div>
         <div>
           <h1 className="text-lg font-bold tracking-tight">cd judge</h1>
-          <p className="text-xs text-muted-foreground">Execution Engine</p>
+          <p className="text-muted-foreground text-xs">Execution Engine</p>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1">
-        <div className="px-2 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <div className="text-muted-foreground mb-2 px-2 text-xs font-semibold tracking-wider uppercase">
           Platform
         </div>
         {navItems.map((item) => {
@@ -63,39 +66,39 @@ export function SidebarNav({ onOpenPlans }: SidebarNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
+                "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? 'bg-muted text-foreground shadow-sm border border-border'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                  ? "bg-muted text-foreground border-border border shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
               )}
             >
               <Icon
                 size={18}
                 className={cn(
-                  'transition-colors',
+                  "transition-colors",
                   isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground group-hover:text-foreground',
+                    ? "text-primary"
+                    : "text-muted-foreground group-hover:text-foreground",
                 )}
               />
               {item.label}
               {isActive && (
-                <div className="ml-auto w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+                <div className="bg-primary ml-auto h-1.5 w-1.5 rounded-full shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               )}
             </Link>
           );
         })}
 
-        <div className="mt-8 px-2 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <div className="text-muted-foreground mt-8 mb-2 px-2 text-xs font-semibold tracking-wider uppercase">
           Resources
         </div>
         <Link
           href="/dashboard/docs"
           className={cn(
-            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
-            pathname === '/dashboard/docs'
-              ? 'bg-muted text-foreground shadow-sm border border-border'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+            "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            pathname === "/dashboard/docs"
+              ? "bg-muted text-foreground border-border border shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
           )}
         >
           <BookOpen
@@ -107,21 +110,17 @@ export function SidebarNav({ onOpenPlans }: SidebarNavProps) {
       </nav>
 
       {/* Upgrade Card */}
-      <div className="mt-auto p-4 bg-gradient-to-br from-card to-muted border border-border rounded-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 blur-3xl -mr-10 -mt-10 rounded-full group-hover:bg-primary/20 transition-all duration-500"></div>
+      <div className="from-card to-muted border-border group relative mt-auto overflow-hidden rounded-2xl border bg-gradient-to-br p-4">
+        <div className="bg-primary/10 group-hover:bg-primary/20 absolute top-0 right-0 -mt-10 -mr-10 h-24 w-24 rounded-full blur-3xl transition-all duration-500"></div>
         <div className="relative z-10">
-          <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center mb-3 border border-border">
+          <div className="bg-muted border-border mb-3 flex h-10 w-10 items-center justify-center rounded-lg border">
             <Box className="text-foreground" size={20} />
           </div>
-          <h4 className="text-sm font-semibold mb-1">Upgrade to Pro</h4>
-          <p className="text-xs text-muted-foreground mb-3">
+          <h4 className="mb-1 text-sm font-semibold">Upgrade to Pro</h4>
+          <p className="text-muted-foreground mb-3 text-xs">
             Unlock unlimited executions and priority support.
           </p>
-          <Button
-            onClick={onOpenPlans}
-            className="w-full shadow-lg"
-            size="sm"
-          >
+          <Button onClick={onOpenPlans} className="w-full shadow-lg" size="sm">
             View Plans
           </Button>
         </div>

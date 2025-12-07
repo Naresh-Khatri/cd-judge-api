@@ -1,9 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { Button } from "@acme/ui/button";
-
 import { auth, getSession } from "~/auth/server";
+import { Button } from "~/components/ui/button";
 
 export async function AuthShowcase() {
   const session = await getSession();

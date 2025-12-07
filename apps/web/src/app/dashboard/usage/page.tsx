@@ -17,10 +17,9 @@ import {
   YAxis,
 } from "recharts";
 
-import { Card } from "@acme/ui/card";
-
-import { useTRPC } from "~/trpc/react";
+import { Card } from "~/components/ui/card";
 import { USAGE_DATA } from "~/lib/mock-data";
+import { useTRPC } from "~/trpc/react";
 
 const languageData = [
   { name: "Python", value: 5400 },
@@ -251,6 +250,6 @@ export default function UsageView() {
           </ResponsiveContainer>
         </Card>
       </div>
-    </div >
+    </div>
   );
 }
