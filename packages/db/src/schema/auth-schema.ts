@@ -12,6 +12,8 @@ export const user = pgTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+  emailNotifications: boolean("email_notifications").default(true).notNull(),
+  webhookUrl: text("webhook_url"),
 });
 
 export const session = pgTable(
