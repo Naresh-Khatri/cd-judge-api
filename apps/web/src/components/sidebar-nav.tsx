@@ -66,9 +66,9 @@ export function SidebarNav({ onOpenPlans }: SidebarNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-muted text-foreground border-border border shadow-sm"
+                  ? "to-primary/10 text-foreground border-border border bg-gradient-to-r from-transparent from-75% shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
               )}
             >
@@ -83,7 +83,7 @@ export function SidebarNav({ onOpenPlans }: SidebarNavProps) {
               />
               {item.label}
               {isActive && (
-                <div className="bg-primary ml-auto h-1.5 w-1.5 rounded-full shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+                <div className="bg-primary absolute right-0 h-6 w-1 rounded-l-md shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               )}
             </Link>
           );

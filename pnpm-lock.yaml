@@ -207,9 +207,6 @@ importers:
       '@acme/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@acme/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@acme/validators':
         specifier: workspace:*
         version: link:../../packages/validators

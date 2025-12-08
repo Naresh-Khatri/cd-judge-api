@@ -29,10 +29,10 @@ const languageData = [
 ];
 
 const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
+  "var(--primary)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
 ];
 
 export default function UsageView() {
@@ -161,45 +161,45 @@ export default function UsageView() {
             <BarChart data={USAGE_DATA} barSize={20}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
+                stroke="var(--border)"
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
-                stroke="hsl(var(--muted-foreground))"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 dy={10}
               />
               <YAxis
-                stroke="hsl(var(--muted-foreground))"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 dx={-10}
               />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+                cursor={{ fill: "var(--muted)", opacity: 0.4 }}
                 contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  borderColor: "hsl(var(--border))",
+                  backgroundColor: "var(--popover)",
+                  borderColor: "var(--border)",
                   borderRadius: "8px",
-                  color: "hsl(var(--popover-foreground))",
+                  color: "var(--popover-foreground)",
                 }}
               />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
               <Bar
                 dataKey="successful"
                 stackId="a"
-                fill="hsl(var(--primary))"
+                fill="var(--primary)"
                 name="Successful"
                 radius={[0, 0, 4, 4]}
               />
               <Bar
                 dataKey="failed"
                 stackId="a"
-                fill="hsl(var(--destructive))"
+                fill="var(--destructive)"
                 name="Failed"
                 radius={[4, 4, 0, 0]}
               />
@@ -234,10 +234,10 @@ export default function UsageView() {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  borderColor: "hsl(var(--border))",
+                  backgroundColor: "var(--popover)",
+                  borderColor: "var(--border)",
                   borderRadius: "8px",
-                  color: "hsl(var(--popover-foreground))",
+                  color: "var(--popover-foreground)",
                 }}
               />
               <Legend

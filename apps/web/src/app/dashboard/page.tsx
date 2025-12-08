@@ -104,31 +104,31 @@ export default function DashboardView() {
                   >
                     <stop
                       offset="5%"
-                      stopColor="hsl(var(--primary))"
+                      stopColor="var(--primary)"
                       stopOpacity={0.3}
                     />
                     <stop
                       offset="95%"
-                      stopColor="hsl(var(--primary))"
+                      stopColor="var(--primary)"
                       stopOpacity={0}
                     />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="hsl(var(--border))"
+                  stroke="var(--border)"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="name"
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="var(--muted-foreground)"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   dy={10}
                 />
                 <YAxis
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="var(--muted-foreground)"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
@@ -137,17 +137,17 @@ export default function DashboardView() {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    borderColor: "hsl(var(--border))",
+                    backgroundColor: "var(--popover)",
+                    borderColor: "var(--border)",
                     borderRadius: "8px",
-                    color: "hsl(var(--popover-foreground))",
+                    color: "var(--popover-foreground)",
                   }}
-                  itemStyle={{ color: "hsl(var(--primary))" }}
+                  itemStyle={{ color: "var(--primary)" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="requests"
-                  stroke="hsl(var(--primary))"
+                  stroke="var(--primary)"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorRequests)"
@@ -173,11 +173,10 @@ export default function DashboardView() {
             ].map((step, idx) => (
               <div key={idx} className="flex items-start gap-3">
                 <div
-                  className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs ${
-                    step.done
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs ${step.done
+                    ? "bg-primary/20 text-primary"
+                    : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   {step.done ? <CheckCircle size={12} /> : idx + 1}
                 </div>

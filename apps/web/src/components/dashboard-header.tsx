@@ -43,11 +43,13 @@ export function DashboardHeader({ onOpenMobileSidebar }: DashboardHeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell size={20} />
-          <span className="bg-primary border-background absolute top-2 right-2.5 h-2 w-2 rounded-full border"></span>
-        </Button>
-        <AnimatedThemeToggler />
+        <div>
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell size={20} />
+            <span className="bg-primary border-background absolute top-2 right-2.5 h-2 w-2 rounded-full border"></span>
+          </Button>
+          <AnimatedThemeToggler />
+        </div>
         <div className="bg-border mx-1 h-8 w-px"></div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

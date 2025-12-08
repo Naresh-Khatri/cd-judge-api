@@ -169,7 +169,7 @@ export default function ApiKeysView() {
       </div>
 
       {/* Keys Table */}
-      <Card className="overflow-hidden shadow-sm">
+      <Card className="overflow-hidden p-0 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>

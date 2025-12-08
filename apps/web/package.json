@@ -16,7 +16,6 @@
     "@acme/api": "workspace:*",
     "@acme/auth": "workspace:*",
     "@acme/db": "workspace:*",
-    "@acme/ui": "workspace:*",
     "@acme/validators": "workspace:*",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -64,3 +63,4 @@
   },
   "prettier": "@acme/prettier-config"
 }
+
