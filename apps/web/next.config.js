@@ -7,11 +7,15 @@ await jiti.import("./src/env");
 
 /** @type {import("next").NextConfig} */
 const config = {
+  /** Required for Docker production builds */
+  output: "standalone",
+
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@acme/api",
     "@acme/auth",
     "@acme/db",
+    "@acme/jobs",
     "@acme/ui",
     "@acme/validators",
   ],

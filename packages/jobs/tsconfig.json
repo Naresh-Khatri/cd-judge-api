@@ -1,0 +1,11 @@
+{
+  "extends": "@acme/tsconfig/compiled-package.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": [
+    "src",
+    "../../.eslintrc.cjs"
+  ]
+}

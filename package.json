@@ -23,8 +23,7 @@
     "postinstall": "pnpm lint:ws",
     "typecheck": "turbo run typecheck",
     "ui-add": "turbo run ui-add",
-    "android": "expo run:android",
-    "ios": "expo run:ios"
+    "test:load": "k6 run load-tests/playground-stress.js"
   },
   "devDependencies": {
     "@acme/prettier-config": "workspace:*",
@@ -33,6 +32,11 @@
     "prettier": "catalog:",
     "turbo": "^2.6.3",
     "typescript": "catalog:"
+  },
+  "pnpm": {
+    "overrides": {
+      "@sinclair/typebox": "0.32.4"
+    }
   },
   "prettier": "@acme/prettier-config"
 }
