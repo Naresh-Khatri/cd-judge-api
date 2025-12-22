@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Clock, Code2, Shield, Zap } from "lucide-react";
 
 import { authClient } from "~/auth/client";
+import { GitHubStarsButton } from "~/components/github-button";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 
@@ -68,17 +69,25 @@ export default function HomePage() {
 
         {/* CTA */}
         <div className="flex flex-col items-center gap-4">
-          <Button
-            size="lg"
-            onClick={async () => {
-              await authClient.signIn.social({
-                provider: "google",
-                callbackURL: "/dashboard",
-              });
-            }}
-          >
-            Sign in with Google
-          </Button>
+          <div className="flex">
+            <GitHubStarsButton
+              username={"naresh-khatri"}
+              repo={"cd-judge-api"}
+              className="mr-4"
+            />
+
+            <Button
+              size="lg"
+              onClick={async () => {
+                await authClient.signIn.social({
+                  provider: "google",
+                  callbackURL: "/dashboard",
+                });
+              }}
+            >
+              Sign in with Google
+            </Button>
+          </div>
           <p className="text-muted-foreground text-sm">
             Get started in seconds with your GitHub account
           </p>
