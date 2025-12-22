@@ -1,7 +1,6 @@
 "use client";
 
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { authClient } from "~/auth/client";
 import { Button } from "~/components/ui/button";
@@ -9,37 +8,37 @@ import { env } from "~/env";
 
 export function AuthShowcase() {
   const { data: session } = authClient.useSession();
+  const router = useRouter();
 
   if (!session) {
     return (
-      <form>
-        <Button
-          size="lg"
-          formAction={async () => {
-            "use server";
-            const res = await authClient.signIn({
-              body: {
-                provider: "github",
-                callbackURL: "/",
-              },
-            });
-            if (!res.url) {
-              throw new Error("No URL returned from signInSocial");
-            }
+      <Button
+        size="lg"
+        onClick={async () => {
+          const res = await authClient.signIn.social({
+            provider: "github",
+            callbackURL: "/",
+          });
 
-            const url = new URL(res.url);
-            const state = url.searchParams.get("state");
-            if (state) {
-              // Append current base URL to state so dispatcher knows where to return
-              url.searchParams.set("state", `${state}__${env.BASE_URL}`);
-            }
+          if (!res.data?.url) {
+            return;
+          }
 
-            redirect(url.toString());
-          }}
-        >
-          Sign in with GitHub
-        </Button>
-      </form>
+          const url = new URL(res.data.url);
+          const state = url.searchParams.get("state");
+          if (state) {
+            // Append current base URL to state so dispatcher knows where to return
+            url.searchParams.set(
+              "state",
+              `${state}__${env.NEXT_PUBLIC_BASE_URL}`,
+            );
+          }
+
+          window.location.href = url.toString();
+        }}
+      >
+        Sign in with GitHub
+      </Button>
     );
   }
 
@@ -49,20 +48,15 @@ export function AuthShowcase() {
         <span>Logged in as {session.user.name}</span>
       </p>
 
-      <form>
-        <Button
-          size="lg"
-          formAction={async () => {
-            "use server";
-            await auth.api.signOut({
-              headers: await headers(),
-            });
-            redirect("/");
-          }}
-        >
-          Sign out
-        </Button>
-      </form>
+      <Button
+        size="lg"
+        onClick={async () => {
+          await authClient.signOut();
+          router.refresh();
+        }}
+      >
+        Sign out
+      </Button>
     </div>
   );
 }
