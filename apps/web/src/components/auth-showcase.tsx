@@ -14,10 +14,10 @@ export function AuthShowcase() {
       <Button
         size="lg"
         onClick={async () => {
-          authClient.signIn.social({ provider: "gitHub", callbackURL: "/" });
+          authClient.signIn.social({ provider: "google" });
         }}
       >
-        Sign in with GitHub
+        Sign in with Google
       </Button>
     );
   }

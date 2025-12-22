@@ -14,6 +14,8 @@ export const auth = initAuth({
   baseUrl,
   productionUrl: env.PRODUCTION_URL,
   secret: env.BETTER_AUTH_SECRET,
+  googleClientId: env.BETTER_AUTH_GOOGLE_ID,
+  googleClientSecret: env.BETTER_AUTH_GOOGLE_SECRET,
   githubClientId: env.BETTER_AUTH_GITHUB_ID,
   githubClientSecret: env.BETTER_AUTH_GITHUB_SECRET,
   extraPlugins: [nextCookies()],

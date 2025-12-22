@@ -1,5 +1,4 @@
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
-import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { oAuthProxy } from "better-auth/plugins";
@@ -15,6 +14,9 @@ export function initAuth<
 
   githubClientId: string;
   githubClientSecret: string;
+  googleClientId: string;
+  googleClientSecret: string;
+
   extraPlugins?: TExtraPlugins;
 }) {
   console.log("initing auth", options);
@@ -29,17 +31,20 @@ export function initAuth<
         productionURL: options.productionUrl,
         currentURL: options.baseUrl,
       }),
-      expo(),
       ...(options.extraPlugins ?? []),
     ],
     socialProviders: {
+      google: {
+        clientId: options.googleClientId,
+        clientSecret: options.googleClientSecret,
+        // redirectURI: `${options.productionUrl}/api/auth/callback/github`,
+      },
       github: {
         clientId: options.githubClientId,
         clientSecret: options.githubClientSecret,
         redirectURI: `${options.productionUrl}/api/auth/callback/github`,
       },
     },
-    trustedOrigins: ["expo://"],
     onAPIError: {
       onError(error, ctx) {
         console.error("BETTER AUTH API ERROR", error, ctx);

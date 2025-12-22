@@ -1,13 +1,14 @@
-import { headers } from "next/headers";
+"use client";
+
 import { redirect } from "next/navigation";
 import { Clock, Code2, Shield, Zap } from "lucide-react";
 
-import { auth, getSession } from "~/auth/server";
+import { authClient } from "~/auth/client";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 
-export default async function HomePage() {
-  const session = await getSession();
+export default function HomePage() {
+  const { data: session } = authClient.useSession();
 
   // If already logged in, redirect to dashboard
   if (session) {
@@ -67,26 +68,17 @@ export default async function HomePage() {
 
         {/* CTA */}
         <div className="flex flex-col items-center gap-4">
-          <form>
-            <Button
-              size="lg"
-              formAction={async () => {
-                "use server";
-                const res = await auth.api.signInSocial({
-                  body: {
-                    provider: "github",
-                    callbackURL: "/dashboard",
-                  },
-                });
-                if (!res.url) {
-                  throw new Error("No URL returned from signInSocial");
-                }
-                redirect(res.url);
-              }}
-            >
-              Sign in with GitHub
-            </Button>
-          </form>
+          <Button
+            size="lg"
+            onClick={async () => {
+              await authClient.signIn.social({
+                provider: "google",
+                callbackURL: "/dashboard",
+              });
+            }}
+          >
+            Sign in with Google
+          </Button>
           <p className="text-muted-foreground text-sm">
             Get started in seconds with your GitHub account
           </p>
