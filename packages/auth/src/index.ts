@@ -27,6 +27,7 @@ export function initAuth<
     plugins: [
       oAuthProxy({
         productionURL: options.productionUrl,
+        currentURL: options.baseUrl,
       }),
       expo(),
       ...(options.extraPlugins ?? []),
@@ -35,7 +36,7 @@ export function initAuth<
       github: {
         clientId: options.githubClientId,
         clientSecret: options.githubClientSecret,
-        redirectURI: `${options.productionUrl}/api/auth/github/redirect`,
+        redirectURI: `${options.productionUrl}/api/auth/callback/github`,
       },
     },
     trustedOrigins: ["expo://"],
