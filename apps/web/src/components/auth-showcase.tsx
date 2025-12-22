@@ -1,12 +1,14 @@
+"use client";
+
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth, getSession } from "~/auth/server";
+import { authClient } from "~/auth/client";
 import { Button } from "~/components/ui/button";
 import { env } from "~/env";
 
-export async function AuthShowcase() {
-  const session = await getSession();
+export function AuthShowcase() {
+  const { data: session } = authClient.useSession();
 
   if (!session) {
     return (
@@ -15,7 +17,7 @@ export async function AuthShowcase() {
           size="lg"
           formAction={async () => {
             "use server";
-            const res = await auth.api.signInSocial({
+            const res = await authClient.signIn({
               body: {
                 provider: "github",
                 callbackURL: "/",
