@@ -40,7 +40,7 @@ export const codeExecutionWorker = new Worker(
       if (!code || !lang) {
         throw new Error("Missing code or lang in job data");
       }
-      console.log("Running code for job:", job.id);
+      // console.log("Running code for job:", job.id);
       const result = await runner.runCode({
         code,
         lang: lang as Language,
@@ -51,7 +51,7 @@ export const codeExecutionWorker = new Worker(
           subProcessLimit,
         },
       });
-      console.log({ result });
+      // console.log({ result });
       return result;
     } catch (error) {
       console.error("Code execution failed for job:", job.id, error);

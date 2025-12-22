@@ -19,7 +19,6 @@ export function initAuth<
 
   extraPlugins?: TExtraPlugins;
 }) {
-  console.log("initing auth", options);
   const config = {
     database: drizzleAdapter(db, {
       provider: "pg",

@@ -37,7 +37,6 @@ export async function POST(req: Request) {
     .from(apiKey)
     .where(eq(apiKey.keyHash, keyHash))
     .limit(1);
-  console.log(keyByHash);
 
   if (keyByHash && keyByHash.status === "active") {
     existingKey = keyByHash;

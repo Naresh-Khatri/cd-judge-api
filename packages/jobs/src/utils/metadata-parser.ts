@@ -72,7 +72,7 @@ export const metadataParser = (metadataContent: string): SandboxMetadata => {
   // Split the content into lines and process each
   const lines = metadataContent.trim().split("\n");
 
-  console.log({ lines });
+  // console.log({ lines });
   for (const line of lines) {
     // Split the line into key and value
     const [rawKey, rawValue] = line.split(":", 2);

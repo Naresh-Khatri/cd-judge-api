@@ -57,7 +57,9 @@ class IsolateRunner {
     const boxdir = path.join(workdir, "box");
 
     // Create a user-owned temporary directory for control files
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), `isolate-${boxId}-`));
+    const tempDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), `isolate-${boxId}-`),
+    );
 
     // Define file paths in the temporary directory
     const files = {
@@ -151,10 +153,10 @@ class IsolateRunner {
 
       // Write stdin
       await fs.writeFile(this.rootDir.files.stdin, stdin, "utf8");
-      console.warn(`
-       ----------------------------------------
-       INIT NEW SANDBOX AT ${boxId} ${this.rootDir.files.stdin} ${stdin}
-       ----------------------------------------`);
+      // console.warn(`
+      //  ----------------------------------------
+      //  INIT NEW SANDBOX AT ${boxId} ${this.rootDir.files.stdin} ${stdin}
+      //  ----------------------------------------`);
       // await new Promise((resolve) => setTimeout(resolve, 20000));
       // Compile if needed
       if (langConfig.compileCommand) {
@@ -208,7 +210,7 @@ class IsolateRunner {
         ${langConfig.opts} \
         --run \
         -- ${langConfig.runCommand} < ${this.rootDir.files.stdin} > ${this.rootDir.files.stdout} 2> ${this.rootDir.files.stderr}`;
-      console.log("cmd: ==============================", runCmd);
+      // console.log("cmd: ==============================", runCmd);
       execSync(runCmd);
 
       // Read results
@@ -235,9 +237,9 @@ class IsolateRunner {
         stderr: stderr,
       };
     } catch (error) {
-      console.log("--------------------------------");
-      console.log(error);
-      console.log("------------------------------");
+      // console.log("--------------------------------");
+      // console.log(error);
+      // console.log("------------------------------");
 
       const metadataContent = execSync(
         `cat ${this.rootDir.files.metadata}`,
