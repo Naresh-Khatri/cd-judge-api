@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth, getSession } from "~/auth/server";
 import { Button } from "~/components/ui/button";
+import { env } from "~/env";
 
 export async function AuthShowcase() {
   const session = await getSession();
@@ -23,10 +24,18 @@ export async function AuthShowcase() {
             if (!res.url) {
               throw new Error("No URL returned from signInSocial");
             }
-            redirect(res.url);
+
+            const url = new URL(res.url);
+            const state = url.searchParams.get("state");
+            if (state) {
+              // Append current base URL to state so dispatcher knows where to return
+              url.searchParams.set("state", `${state}__${env.BASE_URL}`);
+            }
+
+            redirect(url.toString());
           }}
         >
-          Sign in with hi
+          Sign in with GitHub
         </Button>
       </form>
     );

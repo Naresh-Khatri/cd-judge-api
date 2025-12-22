@@ -1,7 +1,10 @@
 "use client";
 
-import { Bell, Menu, Search, User } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Bell, Menu, Search } from "lucide-react";
 
+import { authClient } from "~/auth/client";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -19,6 +22,28 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ onOpenMobileSidebar }: DashboardHeaderProps) {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+
+  const user = session?.user;
+  const userInitials = user?.name
+    ? user.name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+    : "??";
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+        },
+      },
+    });
+  };
+
   return (
     <header className="bg-background/80 z-10 flex h-16 items-center justify-between border-b px-6 backdrop-blur-md">
       <div className="flex items-center gap-4">
@@ -43,7 +68,7 @@ export function DashboardHeader({ onOpenMobileSidebar }: DashboardHeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div>
+        <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="relative">
             <Bell size={20} />
             <span className="bg-primary border-background absolute top-2 right-2.5 h-2 w-2 rounded-full border"></span>
@@ -55,21 +80,30 @@ export function DashboardHeader({ onOpenMobileSidebar }: DashboardHeaderProps) {
           <DropdownMenuTrigger asChild>
             <button className="hover:bg-muted hover:border-border flex items-center gap-3 rounded-full border border-transparent p-1.5 pr-3 transition-colors">
               <div className="from-primary to-primary/60 text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr text-sm font-medium">
-                JD
+                {userInitials}
               </div>
               <span className="hidden text-sm font-medium sm:block">
-                John Doe
+                {user?.name ?? "User"}
               </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuItem>Team</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings" className="w-full cursor-pointer">
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>Billing (Coming soon)</DropdownMenuItem>
+            <DropdownMenuItem disabled>Team (Coming soon)</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive cursor-pointer"
+              onClick={handleLogout}
+            >
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

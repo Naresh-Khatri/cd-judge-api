@@ -17,6 +17,7 @@ export function initAuth<
   githubClientSecret: string;
   extraPlugins?: TExtraPlugins;
 }) {
+  console.log("initing auth", options);
   const config = {
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -34,7 +35,7 @@ export function initAuth<
       github: {
         clientId: options.githubClientId,
         clientSecret: options.githubClientSecret,
-        redirectURI: `${options.productionUrl}/api/auth/callback/github`,
+        redirectURI: `${options.productionUrl}/api/auth/github/redirect`,
       },
     },
     trustedOrigins: ["expo://"],
