@@ -13,7 +13,8 @@ dev:
 	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up -d
 
 prod:
-	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build
+
 
 services:
 	docker compose -f docker-compose.base.yml up -d
