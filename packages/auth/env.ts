@@ -10,6 +10,9 @@ export function authEnv() {
         process.env.NODE_ENV === "production"
           ? z.string().min(1)
           : z.string().min(1).optional(),
+
+      BASE_URL: z.url().min(1),
+      PRODUCTION_URL: z.url().min(1),
       NODE_ENV: z.enum(["development", "production"]).optional(),
     },
     runtimeEnv: process.env,
