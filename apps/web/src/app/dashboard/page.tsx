@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Activity, AlertCircle, CheckCircle, Clock, Code } from "lucide-react";
 import {
   Area,
@@ -15,9 +17,44 @@ import {
 import { StatsCard } from "~/components/stats-card";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
+import { useTRPC } from "~/trpc/react";
 import { CHART_DATA } from "../../lib/mock-data";
 
 export default function DashboardView() {
+  const trpc = useTRPC();
+  const { data: apiKeys } = useSuspenseQuery(trpc.apiKey.list.queryOptions());
+  const [days, setDays] = useState<"7" | "30">("7");
+
+  const { data: usageHistory } = useSuspenseQuery(
+    trpc.apiKey.getUsageHistory.queryOptions({ days }),
+  );
+
+  const totalRequests = apiKeys.reduce(
+    (acc: number, key) => acc + (key.totalRequests || 0),
+    0,
+  );
+  const totalSuccessful = apiKeys.reduce(
+    (acc: number, key) => acc + (key.successfulRequests || 0),
+    0,
+  );
+  const successRate =
+    totalRequests > 0
+      ? ((totalSuccessful / totalRequests) * 100).toFixed(2)
+      : "100";
+
+  const activeKeysCount = apiKeys.filter((k) => k.status === "active").length;
+
+  // Format history data for the chart
+  const formattedChartData = usageHistory?.map((item) => ({
+    name: new Date(item.day).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    }),
+    requests: item.count || 0,
+    successful: item.successful || 0,
+    failed: item.failed || 0,
+  }));
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -47,30 +84,30 @@ export default function DashboardView() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Requests"
-          value="124,592"
-          trend="+12.5%"
+          value={totalRequests.toLocaleString()}
+          trend="+0%"
           trendUp={true}
           icon={Activity}
         />
         <StatsCard
           title="Avg. Latency"
           value="45ms"
-          trend="-2ms"
+          trend="-0ms"
           trendUp={true}
           icon={Clock}
         />
         <StatsCard
           title="Success Rate"
-          value="99.92%"
-          trend="+0.1%"
+          value={`${successRate}%`}
+          trend="+0%"
           trendUp={true}
           icon={CheckCircle}
         />
         <StatsCard
           title="Active Keys"
-          value="3"
-          trend="Max 5"
-          trendUp={false}
+          value={activeKeysCount.toString()}
+          trend={`Max 5`}
+          trendUp={activeKeysCount < 5}
           icon={AlertCircle}
         />
       </div>
@@ -82,78 +119,90 @@ export default function DashboardView() {
             <div>
               <h3 className="text-lg font-semibold">Execution Volume</h3>
               <p className="text-muted-foreground text-sm">
-                Requests processed over the last 7 days
+                Requests processed over the last {days} days
               </p>
             </div>
-            <select className="bg-muted border-border text-foreground focus:ring-ring rounded-lg border p-2 text-sm outline-none focus:ring-1">
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
+            <select
+              value={days}
+              onChange={(e) => setDays(e.target.value as "7" | "30")}
+              className="bg-muted border-border text-foreground focus:ring-ring rounded-lg border p-2 text-sm outline-none focus:ring-1"
+            >
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
             </select>
           </div>
 
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={CHART_DATA}>
-                <defs>
-                  <linearGradient
-                    id="colorRequests"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="5%"
-                      stopColor="var(--primary)"
-                      stopOpacity={0.3}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--primary)"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--border)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="name"
-                  stroke="var(--muted-foreground)"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis
-                  stroke="var(--muted-foreground)"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  dx={-10}
-                  tickFormatter={(value) => `${value / 1000}k`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "var(--popover)",
-                    borderColor: "var(--border)",
-                    borderRadius: "8px",
-                    color: "var(--popover-foreground)",
-                  }}
-                  itemStyle={{ color: "var(--primary)" }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="requests"
-                  stroke="var(--primary)"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorRequests)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {formattedChartData && formattedChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={formattedChartData}>
+                  <defs>
+                    <linearGradient
+                      id="colorRequests"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="var(--primary)"
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--primary)"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--border)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="name"
+                    stroke="var(--muted-foreground)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    stroke="var(--muted-foreground)"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    dx={-10}
+                    tickFormatter={(value) =>
+                      value >= 1000 ? `${value / 1000}k` : value
+                    }
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--popover)",
+                      borderColor: "var(--border)",
+                      borderRadius: "8px",
+                      color: "var(--popover-foreground)",
+                    }}
+                    itemStyle={{ color: "var(--primary)" }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="requests"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorRequests)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                No usage data available for this period.
+              </div>
+            )}
           </div>
         </Card>
 

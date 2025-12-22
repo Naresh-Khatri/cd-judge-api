@@ -2,7 +2,17 @@ import crypto from "crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { apiKey, CreateApiKeySchema, desc, eq } from "@acme/db";
+import {
+  and,
+  apiKey,
+  apiKeyUsage,
+  CreateApiKeySchema,
+  desc,
+  eq,
+  gte,
+  lte,
+  sql,
+} from "@acme/db";
 
 import { protectedProcedure } from "../trpc";
 
@@ -31,6 +41,9 @@ export const apiKeyRouter = {
         prefix: apiKey.prefix,
         status: apiKey.status,
         lastUsedAt: apiKey.lastUsedAt,
+        totalRequests: apiKey.totalRequests,
+        successfulRequests: apiKey.successfulRequests,
+        failedRequests: apiKey.failedRequests,
         createdAt: apiKey.createdAt,
       })
       .from(apiKey)
@@ -115,4 +128,50 @@ export const apiKeyRouter = {
 
       return { success: true };
     }),
+
+  getUsageHistory: protectedProcedure
+    .input(z.object({ days: z.enum(["7", "30"]).default("7") }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const daysCount = parseInt(input.days);
+
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysCount);
+      const startDateStr = startDate.toISOString().split("T")[0]!;
+
+      // Fetch usage for all keys belonging to this user
+      const results = await ctx.db
+        .select({
+          day: apiKeyUsage.day,
+          count: sql<number>`SUM(${apiKeyUsage.count})`,
+          successful: sql<number>`SUM(${apiKeyUsage.successful})`,
+          failed: sql<number>`SUM(${apiKeyUsage.failed})`,
+        })
+        .from(apiKeyUsage)
+        .innerJoin(apiKey, eq(apiKeyUsage.apiKeyId, apiKey.id))
+        .where(
+          and(eq(apiKey.userId, userId), gte(apiKeyUsage.day, startDateStr)),
+        )
+        .groupBy(apiKeyUsage.day)
+        .orderBy(apiKeyUsage.day);
+
+      return results;
+    }),
+
+  getLanguageUsage: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    const results = await ctx.db
+      .select({
+        language: apiKeyUsage.language,
+        value: sql<number>`SUM(${apiKeyUsage.count})`,
+      })
+      .from(apiKeyUsage)
+      .innerJoin(apiKey, eq(apiKeyUsage.apiKeyId, apiKey.id))
+      .where(eq(apiKey.userId, userId))
+      .groupBy(apiKeyUsage.language)
+      .orderBy(desc(sql`SUM(${apiKeyUsage.count})`));
+
+    return results;
+  }),
 } satisfies TRPCRouterRecord;

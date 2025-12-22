@@ -41,6 +41,53 @@ export default function UsageView() {
 
   const [selectedKeyId, setSelectedKeyId] = useState<string>("all");
 
+  const { data: usageHistory } = useSuspenseQuery(
+    trpc.apiKey.getUsageHistory.queryOptions({ days: "7" }),
+  );
+  const { data: languageUsage } = useSuspenseQuery(
+    trpc.apiKey.getLanguageUsage.queryOptions(),
+  );
+
+  const filteredKeys =
+    selectedKeyId === "all"
+      ? apiKeys
+      : apiKeys.filter((k) => k.id === selectedKeyId);
+
+  const totalRequests = filteredKeys.reduce(
+    (acc: number, key) => acc + (key.totalRequests || 0),
+    0,
+  );
+  const totalSuccessful = filteredKeys.reduce(
+    (acc: number, key) => acc + (key.successfulRequests || 0),
+    0,
+  );
+  const totalFailed = filteredKeys.reduce(
+    (acc: number, key) => acc + (key.failedRequests || 0),
+    0,
+  );
+
+  const errorRate =
+    totalRequests > 0 ? ((totalFailed / totalRequests) * 100).toFixed(1) : "0.0";
+
+  // Data formatting for charts
+  const statusChartData = usageHistory?.map((item) => ({
+    date: new Date(item.day).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    }),
+    successful: item.successful || 0,
+    failed: item.failed || 0,
+  }));
+
+  const chartColors = [
+    "var(--primary)",
+    "#10b981",
+    "#f59e0b",
+    "#3b82f6",
+    "#8b5cf6",
+    "#ec4899",
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -95,22 +142,22 @@ export default function UsageView() {
             <Zap size={60} className="text-primary" />
           </div>
           <h3 className="text-muted-foreground mb-4 text-sm font-medium uppercase">
-            Monthly Quota
+            Total Requests
           </h3>
           <div className="mb-2 flex items-end gap-2">
             <span className="text-3xl font-bold">
-              {selectedKeyId === "all" ? "124.5k" : "42.1k"}
+              {totalRequests.toLocaleString()}
             </span>
-            <span className="text-muted-foreground mb-1">/ 500k</span>
+            <span className="text-muted-foreground mb-1">/ ∞</span>
           </div>
           <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
             <div
               className="bg-primary h-full rounded-full transition-all duration-500"
-              style={{ width: selectedKeyId === "all" ? "25%" : "8%" }}
+              style={{ width: `${Math.min((totalRequests / 10000) * 100, 100)}%` }} // Arbitrary scale for visual
             ></div>
           </div>
           <p className="text-muted-foreground mt-3 text-xs">
-            Resets on Nov 1st
+            Aggregated usage count
           </p>
         </Card>
 
@@ -124,130 +171,115 @@ export default function UsageView() {
             <span className="text-xl font-bold">600 req / min</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            Your plan allows for bursts up to 1000 requests.{" "}
-            <span className="text-primary cursor-pointer hover:underline">
-              Upgrade
-            </span>{" "}
-            for more.
+            Your plan allows for bursts up to 1000 requests.
           </p>
         </Card>
 
         {/* Error Rate Card */}
         <Card className="p-6">
           <h3 className="text-muted-foreground mb-4 text-sm font-medium uppercase">
-            Error Rate (24h)
+            Error Rate
           </h3>
           <div className="mb-4 flex items-center gap-3">
             <AlertTriangle className="text-amber-500" size={24} />
-            <span className="text-xl font-bold">
-              {selectedKeyId === "all" ? "0.4%" : "0.1%"}
-            </span>
+            <span className="text-xl font-bold">{errorRate}%</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            Most errors are{" "}
-            <code className="bg-muted rounded px-1 py-0.5 text-xs">
-              400 Bad Request
-            </code>{" "}
-            due to syntax errors in submitted code.
+            Failed: {totalFailed} | Successful: {totalSuccessful}
           </p>
         </Card>
       </div>
 
+      {/* API Usage Table */}
+      <Card className="overflow-hidden">
+        <div className="bg-muted/50 border-b px-6 py-4">
+          <h3 className="font-semibold">API Key Usage Table</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-muted-foreground border-b text-left">
+                <th className="px-6 py-3 font-medium">Name</th>
+                <th className="px-6 py-3 font-medium">Prefix</th>
+                <th className="px-6 py-3 font-medium">Total Req</th>
+                <th className="px-6 py-3 font-medium">Success</th>
+                <th className="px-6 py-3 font-medium">Failed</th>
+                <th className="px-6 py-3 font-medium">Last Used</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredKeys.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-muted-foreground">
+                    No keys found.
+                  </td>
+                </tr>
+              ) : (
+                filteredKeys.map((key) => (
+                  <tr key={key.id} className="border-b last:border-0 hover:bg-muted/50">
+                    <td className="px-6 py-3 font-medium">{key.name}</td>
+                    <td className="px-6 py-3 font-mono text-xs">{key.prefix}</td>
+                    <td className="px-6 py-3">{key.totalRequests || 0}</td>
+                    <td className="px-6 py-3 text-emerald-600 font-medium">
+                      {key.successfulRequests || 0}
+                    </td>
+                    <td className="px-6 py-3 text-red-600 font-medium">{key.failedRequests || 0}</td>
+                    <td className="px-6 py-3 text-muted-foreground">
+                      {key.lastUsedAt
+                        ? new Date(key.lastUsedAt).toLocaleString()
+                        : "Never"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Request Breakdown Chart */}
         <Card className="h-[400px] p-6">
-          <h3 className="mb-6 text-lg font-semibold">Execution Status (24h)</h3>
-          <ResponsiveContainer width="100%" height="85%">
-            <BarChart data={USAGE_DATA} barSize={20}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="date"
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                dy={10}
-              />
-              <YAxis
-                stroke="var(--muted-foreground)"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                dx={-10}
-              />
-              <Tooltip
-                cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-                contentStyle={{
-                  backgroundColor: "var(--popover)",
-                  borderColor: "var(--border)",
-                  borderRadius: "8px",
-                  color: "var(--popover-foreground)",
-                }}
-              />
-              <Legend wrapperStyle={{ paddingTop: "20px" }} />
-              <Bar
-                dataKey="successful"
-                stackId="a"
-                fill="var(--primary)"
-                name="Successful"
-                radius={[0, 0, 4, 4]}
-              />
-              <Bar
-                dataKey="failed"
-                stackId="a"
-                fill="var(--destructive)"
-                name="Failed"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          <h3 className="mb-6 text-lg font-semibold">Execution Status (7d)</h3>
+          {statusChartData && statusChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="85%">
+              <BarChart data={statusChartData} barSize={20}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
+                <Tooltip cursor={{ fill: "var(--muted)", opacity: 0.4 }} contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "8px", color: "var(--popover-foreground)" }} />
+                <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                <Bar dataKey="successful" stackId="a" fill="var(--primary)" name="Successful" radius={[0, 0, 4, 4]} />
+                <Bar dataKey="failed" stackId="a" fill="var(--destructive)" name="Failed" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              No history data available yet.
+            </div>
+          )}
         </Card>
 
-        {/* Language Distribution */}
         <Card className="h-[400px] p-6">
           <h3 className="mb-2 text-lg font-semibold">Top Languages</h3>
-          <p className="text-muted-foreground mb-6 text-sm">
-            Distribution of runtimes used in your requests.
-          </p>
-          <ResponsiveContainer width="100%" height="80%">
-            <PieChart>
-              <Pie
-                data={languageData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {languageData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                    stroke="rgba(0,0,0,0)"
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--popover)",
-                  borderColor: "var(--border)",
-                  borderRadius: "8px",
-                  color: "var(--popover-foreground)",
-                }}
-              />
-              <Legend
-                verticalAlign="middle"
-                align="right"
-                layout="vertical"
-                iconType="circle"
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <p className="text-muted-foreground mb-6 text-sm">Distribution of runtimes used in your requests.</p>
+          {languageUsage && languageUsage.length > 0 ? (
+            <ResponsiveContainer width="100%" height="80%">
+              <PieChart>
+                <Pie data={languageUsage} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="language">
+                  {languageUsage.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} stroke="rgba(0,0,0,0)" />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "8px", color: "var(--popover-foreground)" }} />
+                <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              No language data available yet.
+            </div>
+          )}
         </Card>
       </div>
     </div>

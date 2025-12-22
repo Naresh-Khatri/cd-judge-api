@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { apiKey, db, eq } from "@acme/db";
+import { apiKey, apiKeyUsage, db, eq, sql } from "@acme/db";
 import { codeExecutionQueue, QUEUE_NAMES } from "@acme/jobs";
 
 import { auth } from "~/auth/server";
@@ -72,12 +72,6 @@ export async function POST(req: Request) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  // Update last used at
-  await db
-    .update(apiKey)
-    .set({ lastUsedAt: new Date() })
-    .where(eq(apiKey.id, existingKey.id));
-
   try {
     const body = await req.json();
     const { code, lang } = submitJobSchema.parse(body);
@@ -88,8 +82,87 @@ export async function POST(req: Request) {
       userId: existingKey.userId,
     });
 
+    // Success Update
+    const today = new Date().toISOString().split("T")[0]!;
+    await db.transaction(async (tx) => {
+      await tx
+        .update(apiKey)
+        .set({
+          lastUsedAt: new Date(),
+          totalRequests: sql`${apiKey.totalRequests} + 1`,
+          successfulRequests: sql`${apiKey.successfulRequests} + 1`,
+        })
+        .where(eq(apiKey.id, existingKey.id));
+
+      await tx
+        .insert(apiKeyUsage)
+        .values({
+          apiKeyId: existingKey.id,
+          day: today,
+          language: lang,
+          count: 1,
+          successful: 1,
+          failed: 0,
+        })
+        .onConflictDoUpdate({
+          target: [
+            apiKeyUsage.apiKeyId,
+            apiKeyUsage.day,
+            apiKeyUsage.language,
+          ],
+          set: {
+            count: sql`${apiKeyUsage.count} + 1`,
+            successful: sql`${apiKeyUsage.successful} + 1`,
+          },
+        });
+    });
+
     return NextResponse.json({ id: job.id });
   } catch (error) {
+    // Attempt to get lang from body if possible for failure tracking
+    let failedLang = "unknown";
+    try {
+      const body = await req.clone().json();
+      failedLang = body.lang || "unknown";
+    } catch {
+      // ignore
+    }
+
+    // Failure Update
+    const today = new Date().toISOString().split("T")[0]!;
+    await db.transaction(async (tx) => {
+      await tx
+        .update(apiKey)
+        .set({
+          lastUsedAt: new Date(),
+          totalRequests: sql`${apiKey.totalRequests} + 1`,
+          failedRequests: sql`${apiKey.failedRequests} + 1`,
+        })
+        .where(eq(apiKey.id, existingKey.id));
+
+      await tx
+        .insert(apiKeyUsage)
+        .values({
+          apiKeyId: existingKey.id,
+          day: today,
+          language: failedLang,
+          count: 1,
+          successful: 0,
+          failed: 1,
+        })
+        .onConflictDoUpdate({
+          target: [
+            apiKeyUsage.apiKeyId,
+            apiKeyUsage.day,
+            apiKeyUsage.language,
+          ],
+          set: {
+            count: sql`${apiKeyUsage.count} + 1`,
+            failed: sql`${apiKeyUsage.failed} + 1`,
+          },
+        });
+    });
+
     if (error instanceof z.ZodError) {
       return new NextResponse("Invalid request body", { status: 400 });
     }
