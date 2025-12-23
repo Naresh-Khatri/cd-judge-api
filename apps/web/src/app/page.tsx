@@ -89,7 +89,7 @@ export default function HomePage() {
             </Button>
           </div>
           <p className="text-muted-foreground text-sm">
-            Get started in seconds with your GitHub account
+            Get started in seconds with your Google account
           </p>
         </div>
       </div>
