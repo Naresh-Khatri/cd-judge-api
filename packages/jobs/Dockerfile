@@ -30,9 +30,11 @@ RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-$(dpkg --print-architect
     | tar -C /usr/local -xz
 ENV PATH="/usr/local/go/bin:${PATH}"
 
-# ─── Install Rust (rustc only, no rustup shim) ───
+# ─── Install Rust (actual rustc binary, not the rustup shim) ───
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal \
-    && cp "$(readlink -f /root/.cargo/bin/rustc)" /usr/local/bin/rustc \
+    && cp /root/.rustup/toolchains/stable-*/bin/rustc /usr/local/bin/rustc \
+    && cp -r /root/.rustup/toolchains/stable-*/lib/* /usr/local/lib/ \
+    && ldconfig \
     && rm -rf /root/.rustup /root/.cargo
 
 

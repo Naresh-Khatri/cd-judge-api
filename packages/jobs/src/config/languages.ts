@@ -32,14 +32,14 @@ const LANGUAGE_CONFIGS: Record<Language, LanguageConfig> = {
     fileName: "main.rs",
     compileCommand: "/usr/local/bin/rustc -o program main.rs",
     runCommand: "./program",
-    opts: "-E HOME=/tmp",
+    opts: "-E HOME=/tmp --dir=/etc/alternatives=/etc/alternatives",
   },
   go: {
     extension: "go",
     fileName: "main.go",
     compileCommand: "/usr/local/go/bin/go build -o program main.go",
     runCommand: "./program",
-    opts: "--dir=/usr/local/go=/usr/local/go -E GOCACHE=/tmp -E GOPATH=/tmp/go -E HOME=/tmp --open-files=256",
+    opts: "--dir=/usr/local/go=/usr/local/go -E GOCACHE=/tmp -E GOPATH=/tmp/go -E HOME=/tmp --open-files=256 -p120",
   },
   c: {
     extension: "c",

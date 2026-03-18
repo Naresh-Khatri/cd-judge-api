@@ -153,7 +153,7 @@ class IsolateRunner {
         const compileCmd = `isolate -s -b ${boxId} -M ${this.rootDir.files.metadata} \
           -t 30 -w 60 -k 64000 \
           -p30 \
-          -f 4096 \
+          -f 65536 \
           -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
         ${langConfig.opts} \
           --run \
