@@ -43,18 +43,20 @@
     "ui-add": {
       "cache": false,
       "interactive": true
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false
     }
   },
   "globalEnv": [
     "POSTGRES_URL",
-    "BETTER_AUTH_GITHUB_CLIENT_ID",
-    "BETTER_AUTH_GITHUB_CLIENT_SECRET",
-    "BETTER_AUTH_GOOGLE_CLIENT_ID",
-    "BETTER_AUTH_GOOGLE_CLIENT_SECRET",
-
-    "BETTER_AUTH_REDIRECT_PROXY_URL",
-    "BETTER_SECRET",
-    "PORT"
+    "REDIS_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_GOOGLE_ID",
+    "BETTER_AUTH_GOOGLE_SECRET",
+    "BASE_URL",
+    "PRODUCTION_URL"
   ],
   "globalPassThroughEnv": ["NODE_ENV", "CI", "npm_lifecycle_event"]
 }
