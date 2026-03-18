@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, Menu, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -13,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Input } from "~/components/ui/input";
 import { authClient } from "~/lib/auth/client";
 import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
 
@@ -55,24 +54,10 @@ export function DashboardHeader({ onOpenMobileSidebar }: DashboardHeaderProps) {
         >
           <Menu size={20} />
         </Button>
-
-        {/* Search Bar */}
-        <div className="group relative hidden md:block">
-          <Search className="text-muted-foreground group-focus-within:text-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transition-colors" />
-          <Input
-            type="text"
-            placeholder="Search resources..."
-            className="bg-muted/50 w-64 pr-4 pl-10"
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell size={20} />
-            <span className="bg-primary border-background absolute top-2 right-2.5 h-2 w-2 rounded-full border"></span>
-          </Button>
           <AnimatedThemeToggler />
         </div>
         <div className="bg-border mx-1 h-8 w-px"></div>

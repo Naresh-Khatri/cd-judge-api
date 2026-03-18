@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import {
   BarChart2,
   BookOpen,
-  Box,
+  Gauge,
+  Github,
   Key,
   LayoutDashboard,
   Settings,
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard/playground", label: "Playground", icon: TerminalSquare },
   { href: "/dashboard/api-keys", label: "API Keys", icon: Key },
   { href: "/dashboard/usage", label: "Usage & Limits", icon: BarChart2 },
+  { href: "/dashboard/performance", label: "Performance", icon: Gauge },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -83,7 +85,7 @@ export function SidebarNav({ onOpenPlans }: SidebarNavProps) {
               />
               {item.label}
               {isActive && (
-                <div className="bg-primary absolute right-0 h-6 w-1 rounded-l-md shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+                <div className="bg-primary absolute right-0 h-6 w-[3px] rounded-l-md shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
               )}
             </Link>
           );
@@ -109,20 +111,35 @@ export function SidebarNav({ onOpenPlans }: SidebarNavProps) {
         </Link>
       </nav>
 
-      {/* Upgrade Card */}
+      {/* Open Source Card */}
       <div className="from-card to-muted border-border group relative mt-auto overflow-hidden rounded-2xl border bg-gradient-to-br p-4">
         <div className="bg-primary/10 group-hover:bg-primary/20 absolute top-0 right-0 -mt-10 -mr-10 h-24 w-24 rounded-full blur-3xl transition-all duration-500"></div>
         <div className="relative z-10">
           <div className="bg-muted border-border mb-3 flex h-10 w-10 items-center justify-center rounded-lg border">
-            <Box className="text-foreground" size={20} />
+            <Github className="text-foreground" size={20} />
           </div>
-          <h4 className="mb-1 text-sm font-semibold">Upgrade to Pro</h4>
+          <h4 className="mb-1 text-sm font-semibold">Open Source</h4>
           <p className="text-muted-foreground mb-3 text-xs">
-            Unlock unlimited executions and priority support.
+            Free forever with 10x Judge0 limits.
           </p>
-          <Button onClick={onOpenPlans} className="w-full shadow-lg" size="sm">
-            View Plans
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button asChild className="w-full" size="sm" variant="outline">
+              <a
+                href="https://github.com/naresh-khatri/cd-judge-api"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View on GitHub
+              </a>
+            </Button>
+            <Button
+              onClick={onOpenPlans}
+              className="w-full shadow-lg"
+              size="sm"
+            >
+              View Plans
+            </Button>
+          </div>
         </div>
       </div>
     </div>

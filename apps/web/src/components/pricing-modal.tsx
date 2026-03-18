@@ -19,50 +19,64 @@ interface PricingModalProps {
 
 const plans = [
   {
-    name: "Free",
-    price: "$0",
-    period: "/month",
-    description: "Perfect for trying out cd judge",
-    features: [
-      "500k executions/month",
-      "Basic support",
-      "5 API keys",
-      "100ms avg latency",
-    ],
-    cta: "Current Plan",
-    highlighted: false,
-  },
-  {
-    name: "Pro",
-    price: "$29",
-    period: "/month",
-    description: "For professional developers and teams",
-    features: [
-      "5M executions/month",
-      "Priority support",
-      "Unlimited API keys",
-      "50ms avg latency",
-      "Advanced analytics",
-      "Custom limits",
-    ],
-    cta: "Upgrade to Pro",
-    highlighted: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    description: "For large scale applications",
+    name: "Self-Hosted",
+    price: "Free",
+    period: " / forever",
+    description: "Deploy on your own infrastructure",
     features: [
       "Unlimited executions",
-      "Dedicated support",
-      "SLA guarantee",
-      "25ms avg latency",
-      "Custom integrations",
-      "Volume discounts",
+      "10 API keys",
+      "10 languages",
+      "No rate limits",
+      "Full source code access",
+      "Interactive playground",
+      "Performance benchmarking",
+      "OpenAPI docs",
     ],
-    cta: "Contact Sales",
+    cta: "View on GitHub",
+    ctaHref: "https://github.com/naresh-khatri/cd-judge-api",
     highlighted: false,
+    disabled: false,
+  },
+  {
+    name: "Managed",
+    price: "$0",
+    period: " / month",
+    description: "Hosted by us — generous free tier",
+    features: [
+      "Unlimited executions",
+      "10 API keys",
+      "10 languages",
+      "100 requests / minute",
+      "1,000 requests / hour",
+      "Interactive playground",
+      "Performance benchmarking",
+      "Zero maintenance",
+    ],
+    cta: "Current Plan",
+    ctaHref: undefined,
+    highlighted: true,
+    disabled: true,
+  },
+  {
+    name: "Managed Pro",
+    price: "$29",
+    period: " / month",
+    description: "For teams and production workloads",
+    features: [
+      "Everything in Managed",
+      "Unlimited API keys",
+      "Priority support",
+      "Higher rate limits",
+      "Webhooks",
+      "Custom domains",
+      "SLA guarantee",
+      "Advanced analytics",
+    ],
+    cta: "Coming Soon",
+    ctaHref: undefined,
+    highlighted: false,
+    disabled: true,
   },
 ];
 
@@ -71,9 +85,9 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] min-w-4xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Upgrade Your Plan</DialogTitle>
+          <DialogTitle>Plans & Pricing</DialogTitle>
           <DialogDescription>
-            Choose the perfect plan for your execution needs
+            Self-host for free or use our managed service
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -104,13 +118,29 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
                   </li>
                 ))}
               </ul>
-              <Button
-                className="mt-6 w-full"
-                variant={plan.highlighted ? "default" : "outline"}
-                disabled={plan.name === "Free"}
-              >
-                {plan.cta}
-              </Button>
+              {plan.ctaHref ? (
+                <Button
+                  className="mt-6 w-full"
+                  variant={plan.highlighted ? "default" : "outline"}
+                  asChild
+                >
+                  <a
+                    href={plan.ctaHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {plan.cta}
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  className="mt-6 w-full"
+                  variant={plan.highlighted ? "default" : "outline"}
+                  disabled={plan.disabled}
+                >
+                  {plan.cta}
+                </Button>
+              )}
             </Card>
           ))}
         </div>

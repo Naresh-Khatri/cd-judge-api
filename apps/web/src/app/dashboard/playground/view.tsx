@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Key, Play, RotateCcw, Save, Terminal } from "lucide-react";
+import { Key, Play, RotateCcw, Terminal } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
@@ -126,6 +126,8 @@ export default function PlaygroundView() {
   const [language, setLanguage] = useState<LanguageType>("py");
   const [code, setCode] = useState(DEFAULT_CODE.py ?? "");
   const [output, setOutput] = useState<string>("Ready to execute...");
+  const [execMemory, setExecMemory] = useState<string | null>(null);
+  const [execCpu, setExecCpu] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 
   const activeKeys = apiKeys.filter((k) => k.status === "active");
@@ -137,6 +139,8 @@ export default function PlaygroundView() {
     setLanguage(lang);
     setCode(DEFAULT_CODE[lang] ?? "");
     setOutput("Ready to execute...");
+    setExecMemory(null);
+    setExecCpu(null);
   };
 
   const handleRun = async () => {
@@ -191,12 +195,25 @@ export default function PlaygroundView() {
           const jobData = await pollRes.json();
           if (jobData.status === "completed") {
             clearInterval(poll);
+            const result = jobData.result;
+            if (result) {
+              setExecMemory(
+                result.memory != null
+                  ? `${(result.memory / 1024).toFixed(1)}MB`
+                  : null,
+              );
+              setExecCpu(
+                result.time != null ? `${result.time}ms` : null,
+              );
+            }
             setOutput(
-              `> Status: ${jobData.status}\n> Result:\n${JSON.stringify(jobData.result, null, 2)}`,
+              `> Status: ${jobData.status}\n> Result:\n${JSON.stringify(result, null, 2)}`,
             );
             setIsRunning(false);
           } else if (jobData.status === "failed") {
             clearInterval(poll);
+            setExecMemory(null);
+            setExecCpu(null);
             setOutput(
               `> Job Failed\n> Error: ${JSON.stringify(jobData.result)}`,
             );
@@ -282,10 +299,6 @@ export default function PlaygroundView() {
           >
             <RotateCcw size={20} />
           </Button>
-          <Button variant="ghost" size="icon" title="Save Snippet">
-            <Save size={20} />
-          </Button>
-
           <Button
             onClick={handleRun}
             disabled={isRunning || !selectedKeyId}
@@ -340,11 +353,7 @@ export default function PlaygroundView() {
                 {LANGUAGES.find((l) => l.id === language)?.id ?? language}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground px-2 text-xs">
-                Autosaved
-              </span>
-            </div>
+            <div className="flex items-center gap-2" />
           </div>
 
           {/* Editor Body */}
@@ -397,8 +406,8 @@ export default function PlaygroundView() {
             </pre>
           </div>
           <div className="bg-muted/30 text-muted-foreground flex justify-between border-t p-3 text-xs">
-            <span>Memory: 12MB</span>
-            <span>CPU: 0.04s</span>
+            <span>Memory: {execMemory ?? "—"}</span>
+            <span>CPU: {execCpu ?? "—"}</span>
           </div>
         </Card>
       </div>

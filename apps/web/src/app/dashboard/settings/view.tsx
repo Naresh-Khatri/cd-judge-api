@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   Bell,
   Laptop,
-  Save,
   Shield,
   Smartphone,
   User,
@@ -166,11 +165,11 @@ export default function SettingsView() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  disabled
                   placeholder="your@email.com"
                 />
                 <p className="text-muted-foreground text-[0.8rem]">
-                  This is the email you use to log in.
+                  Managed by your OAuth provider and cannot be changed.
                 </p>
               </div>
               <div className="flex justify-end">
@@ -276,29 +275,31 @@ export default function SettingsView() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="webhook">Webhook URL</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="webhook">Webhook URL</Label>
+                <span className="bg-muted text-muted-foreground rounded px-2 py-0.5 text-xs font-medium">
+                  Coming soon
+                </span>
+              </div>
               <div className="flex gap-2">
                 <Input
                   id="webhook"
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
                   placeholder="https://your-api.com/webhooks"
+                  disabled
                 />
-                <Button variant="secondary">Test</Button>
+                <Button variant="secondary" disabled>
+                  Test
+                </Button>
               </div>
               <p className="text-muted-foreground text-[0.8rem]">
-                We'll send events to this URL when your code execution
-                completes.
+                Webhook notifications for completed executions are coming soon.
               </p>
             </div>
           </CardContent>
           <CardFooter className="bg-muted/50 border-t px-6 py-4">
-            <Button
-              onClick={handleSavePreferences}
-              disabled={updatePreferencesMutation.isPending}
-            >
-              Save Configuration
-            </Button>
+            <Button disabled>Save Configuration</Button>
           </CardFooter>
         </Card>
 
@@ -316,24 +317,21 @@ export default function SettingsView() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <Label className="text-base">Email Notifications</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-base">Email Notifications</Label>
+                  <span className="bg-muted text-muted-foreground rounded px-2 py-0.5 text-xs font-medium">
+                    Coming soon
+                  </span>
+                </div>
                 <p className="text-muted-foreground text-sm">
                   Receive emails about your account activity and usage alerts.
                 </p>
               </div>
-              <Switch
-                checked={emailNotifications}
-                onCheckedChange={setEmailNotifications}
-              />
+              <Switch checked={false} disabled />
             </div>
           </CardContent>
           <CardFooter className="bg-muted/50 border-t px-6 py-4">
-            <Button
-              onClick={handleSavePreferences}
-              disabled={updatePreferencesMutation.isPending}
-            >
-              Save Preferences
-            </Button>
+            <Button disabled>Save Preferences</Button>
           </CardFooter>
         </Card>
 

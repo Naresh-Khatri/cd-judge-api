@@ -18,22 +18,7 @@ import {
 } from "recharts";
 
 import { Card } from "~/components/ui/card";
-import { USAGE_DATA } from "~/lib/mock-data";
 import { useTRPC } from "~/trpc/react";
-
-const languageData = [
-  { name: "Python", value: 5400 },
-  { name: "JavaScript", value: 3200 },
-  { name: "C++", value: 1200 },
-  { name: "Go", value: 800 },
-];
-
-const COLORS = [
-  "var(--primary)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-];
 
 export default function UsageView() {
   const trpc = useTRPC();
@@ -164,14 +149,14 @@ export default function UsageView() {
         {/* Rate Limit Card */}
         <Card className="p-6">
           <h3 className="text-muted-foreground mb-4 text-sm font-medium uppercase">
-            Current Rate Limit
+            Rate Limits
           </h3>
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-2 flex items-center gap-3">
             <ShieldCheck className="text-emerald-500" size={24} />
-            <span className="text-xl font-bold">600 req / min</span>
+            <span className="text-xl font-bold">100 req / min</span>
           </div>
           <p className="text-muted-foreground text-sm">
-            Your plan allows for bursts up to 1000 requests.
+            1,000 requests per hour. 10x Judge0 limits — completely free.
           </p>
         </Card>
 

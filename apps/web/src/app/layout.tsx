@@ -4,12 +4,13 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "~/app/styles.css";
 
 import { Providers } from "~/components/providers";
+import { env } from "~/env";
 import { cn } from "~/lib/utils";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:3000"),
+  metadataBase: new URL(env.BASE_URL),
   title: "CD Judge",
-  description: "CD Judge Application",
+  description: "A free and open-source code execution engine",
 };
 
 export const viewport: Viewport = {

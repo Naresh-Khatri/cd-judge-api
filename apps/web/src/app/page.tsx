@@ -1,7 +1,7 @@
 "use client";
 
 import { redirect } from "next/navigation";
-import { Clock, Code2, Shield, Zap } from "lucide-react";
+import { Clock, Code2, Github, Shield, Zap } from "lucide-react";
 
 import { GitHubStarsButton } from "~/components/github-button";
 import { Button } from "~/components/ui/button";
@@ -31,8 +31,8 @@ export default function HomePage() {
             cd judge
           </h1>
           <p className="text-muted-foreground max-w-2xl text-lg sm:text-xl">
-            A free and open-source Judge0 alternative for code execution. Run
-            code securely in multiple programming languages.
+            A free and open-source code execution engine. Run code securely
+            across 10 programming languages with 10x Judge0 limits.
           </p>
         </div>
 
@@ -42,18 +42,19 @@ export default function HomePage() {
             <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
               <Code2 className="text-primary" size={24} />
             </div>
-            <h3 className="font-semibold">Multi-Language</h3>
+            <h3 className="font-semibold">10 Languages</h3>
             <p className="text-muted-foreground text-sm">
-              Support for popular programming languages
+              Python, Node.js, TypeScript, Java, C++, C, Rust, Go, Ruby, and
+              PHP
             </p>
           </Card>
           <Card className="flex flex-col items-center gap-3 p-6 text-center">
             <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
               <Shield className="text-primary" size={24} />
             </div>
-            <h3 className="font-semibold">Secure</h3>
+            <h3 className="font-semibold">Secure Sandbox</h3>
             <p className="text-muted-foreground text-sm">
-              Isolated execution environment for safety
+              Isolated execution via Linux isolate with cgroup v2
             </p>
           </Card>
           <Card className="flex flex-col items-center gap-3 p-6 text-center">
@@ -62,18 +63,30 @@ export default function HomePage() {
             </div>
             <h3 className="font-semibold">Fast</h3>
             <p className="text-muted-foreground text-sm">
-              Quick execution with real-time results
+              p95 latency under 500ms with real-time results
             </p>
           </Card>
         </div>
 
+        {/* Quick Start */}
+        <Card className="w-full p-6">
+          <h3 className="mb-3 text-center text-lg font-semibold">
+            Quick Start
+          </h3>
+          <pre className="bg-muted overflow-x-auto rounded-lg p-4 text-sm">
+            <code>{`curl -X POST https://cdjudge.com/api/v1/submissions \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"lang": "py", "code": "print(42)"}'`}</code>
+          </pre>
+        </Card>
+
         {/* CTA */}
         <div className="flex flex-col items-center gap-4">
-          <div className="flex">
+          <div className="flex flex-wrap justify-center gap-3">
             <GitHubStarsButton
               username={"naresh-khatri"}
               repo={"cd-judge-api"}
-              className="mr-4"
             />
 
             <Button
@@ -87,9 +100,22 @@ export default function HomePage() {
             >
               Sign in with Google
             </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={async () => {
+                await authClient.signIn.social({
+                  provider: "github",
+                  callbackURL: "/dashboard",
+                });
+              }}
+            >
+              <Github size={18} />
+              Sign in with GitHub
+            </Button>
           </div>
           <p className="text-muted-foreground text-sm">
-            Get started in seconds with your Google account
+            Get started in seconds — completely free
           </p>
         </div>
       </div>

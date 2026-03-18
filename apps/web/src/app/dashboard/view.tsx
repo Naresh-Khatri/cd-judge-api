@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Activity, AlertCircle, CheckCircle, Clock, Code } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle, Code } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -18,7 +18,6 @@ import { StatsCard } from "~/components/stats-card";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { useTRPC } from "~/trpc/react";
-import { CHART_DATA } from "../../lib/mock-data";
 
 export default function DashboardView() {
   const trpc = useTRPC();
@@ -81,20 +80,13 @@ export default function DashboardView() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           title="Total Requests"
           value={totalRequests.toLocaleString()}
           trend="+0%"
           trendUp={true}
           icon={Activity}
-        />
-        <StatsCard
-          title="Avg. Latency"
-          value="45ms"
-          trend="-0ms"
-          trendUp={true}
-          icon={Clock}
         />
         <StatsCard
           title="Success Rate"
@@ -106,8 +98,8 @@ export default function DashboardView() {
         <StatsCard
           title="Active Keys"
           value={activeKeysCount.toString()}
-          trend={`Max 5`}
-          trendUp={activeKeysCount < 5}
+          trend={`Max 10`}
+          trendUp={activeKeysCount < 10}
           icon={AlertCircle}
         />
       </div>
@@ -215,10 +207,26 @@ export default function DashboardView() {
 
           <div className="flex-1 space-y-4">
             {[
-              { title: "Generate your first API Key", done: true },
-              { title: "Install the SDK or use cURL", done: true },
-              { title: "Make your first execution request", done: false },
-              { title: "View execution logs", done: false },
+              {
+                title: "Generate your first API Key",
+                done: apiKeys.length > 0,
+                href: "/dashboard/api-keys",
+              },
+              {
+                title: "Read the API docs",
+                done: false,
+                href: "/api/docs",
+              },
+              {
+                title: "Make your first execution request",
+                done: totalRequests > 0,
+                href: undefined,
+              },
+              {
+                title: "Try the playground",
+                done: false,
+                href: "/dashboard/playground",
+              },
             ].map((step, idx) => (
               <div key={idx} className="flex items-start gap-3">
                 <div
@@ -236,16 +244,25 @@ export default function DashboardView() {
                       : "text-foreground"
                   }
                 >
-                  <p className="text-sm leading-tight font-medium">
-                    {step.title}
-                  </p>
+                  {step.href ? (
+                    <Link
+                      href={step.href}
+                      className="text-sm leading-tight font-medium hover:underline"
+                    >
+                      {step.title}
+                    </Link>
+                  ) : (
+                    <p className="text-sm leading-tight font-medium">
+                      {step.title}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
           <Button variant="outline" className="mt-6 w-full" asChild>
-            <Link href="/dashboard/docs">Read Full Documentation</Link>
+            <Link href="/api/docs">Read Full Documentation</Link>
           </Button>
         </Card>
       </div>
