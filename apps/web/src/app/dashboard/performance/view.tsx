@@ -84,10 +84,16 @@ interface AggregatedStats {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LANGUAGES = [
-  { id: "py", name: "Python 3.10", icon: "🐍" },
-  { id: "js", name: "Node.js 18", icon: "📜" },
+  { id: "py", name: "Python 3", icon: "🐍" },
+  { id: "js", name: "Node.js", icon: "📜" },
+  { id: "ts", name: "TypeScript", icon: "🔷" },
   { id: "java", name: "Java 17", icon: "☕" },
   { id: "cpp", name: "C++ 17", icon: "⚙️" },
+  { id: "c", name: "C", icon: "🔧" },
+  { id: "rs", name: "Rust", icon: "🦀" },
+  { id: "go", name: "Go", icon: "🐹" },
+  { id: "rb", name: "Ruby", icon: "💎" },
+  { id: "php", name: "PHP", icon: "🐘" },
 ];
 
 const BENCHMARK_CODE: Record<string, string> = {
@@ -107,12 +113,20 @@ function fib(n) {
 
 const result = fib(20);
 console.log(\`Fibonacci(20) = \${result}\`);`,
+  ts: `// Fibonacci benchmark
+function fib(n: number): number {
+  if (n <= 1) return n;
+  return fib(n - 1) + fib(n - 2);
+}
+
+const result: number = fib(20);
+console.log(\`Fibonacci(20) = \${result}\`);`,
   java: `public class Main {
     public static int fib(int n) {
         if (n <= 1) return n;
         return fib(n - 1) + fib(n - 2);
     }
-    
+
     public static void main(String[] args) {
         int result = fib(20);
         System.out.println("Fibonacci(20) = " + result);
@@ -130,6 +144,57 @@ int main() {
     std::cout << "Fibonacci(20) = " << result << std::endl;
     return 0;
 }`,
+  c: `#include <stdio.h>
+
+int fib(int n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}
+
+int main() {
+    int result = fib(20);
+    printf("Fibonacci(20) = %d\\n", result);
+    return 0;
+}`,
+  rs: `fn fib(n: u32) -> u32 {
+    if n <= 1 { return n; }
+    fib(n - 1) + fib(n - 2)
+}
+
+fn main() {
+    let result = fib(20);
+    println!("Fibonacci(20) = {}", result);
+}`,
+  go: `package main
+
+import "fmt"
+
+func fib(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fib(n-1) + fib(n-2)
+}
+
+func main() {
+    result := fib(20)
+    fmt.Printf("Fibonacci(20) = %d\\n", result)
+}`,
+  rb: `def fib(n)
+  return n if n <= 1
+  fib(n - 1) + fib(n - 2)
+end
+
+result = fib(20)
+puts "Fibonacci(20) = #{result}"`,
+  php: `<?php
+function fib($n) {
+    if ($n <= 1) return $n;
+    return fib($n - 1) + fib($n - 2);
+}
+
+$result = fib(20);
+echo "Fibonacci(20) = $result\\n";`,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

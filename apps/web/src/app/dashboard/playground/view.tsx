@@ -9,15 +9,21 @@ import { Card } from "~/components/ui/card";
 import { useTRPC } from "~/trpc/react";
 
 const LANGUAGES = [
-  { id: "py", name: "Python 3.10", icon: "🐍" },
-  { id: "js", name: "Node.js 18", icon: "📜" },
+  { id: "py", name: "Python 3", icon: "🐍" },
+  { id: "js", name: "Node.js", icon: "📜" },
+  { id: "ts", name: "TypeScript", icon: "🔷" },
   { id: "java", name: "Java 17", icon: "☕" },
   { id: "cpp", name: "C++ 17", icon: "⚙️" },
+  { id: "c", name: "C", icon: "🔧" },
+  { id: "rs", name: "Rust", icon: "🦀" },
+  { id: "go", name: "Go", icon: "🐹" },
+  { id: "rb", name: "Ruby", icon: "💎" },
+  { id: "php", name: "PHP", icon: "🐘" },
 ];
 
-const DEFAULT_CODE = {
-  py: `print("hi")`,
-  js: `console.log("Starting calculation...");
+const DEFAULT_CODE: Record<string, string> = {
+  py: `print("Hello from Python!")`,
+  js: `console.log("Hello from Node.js!");
 
 function fibonacci(n) {
   if (n <= 1) return n;
@@ -25,8 +31,16 @@ function fibonacci(n) {
 }
 
 const result = fibonacci(10);
-console.log(\`Fibonacci(10) = \${result}\`);
-console.log("Done!");`,
+console.log(\`Fibonacci(10) = \${result}\`);`,
+  ts: `const greeting: string = "Hello from TypeScript!";
+console.log(greeting);
+
+function fibonacci(n: number): number {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+console.log(\`Fibonacci(10) = \${fibonacci(10)}\`);`,
   java: `public class Main {
     public static void main(String[] args) {
         System.out.println("Hello from Java!");
@@ -50,16 +64,67 @@ int main() {
     std::cout << "Fibonacci(10) = " << fibonacci(10) << std::endl;
     return 0;
 }`,
+  c: `#include <stdio.h>
+
+int fibonacci(int n) {
+    if (n <= 1) return n;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+int main() {
+    printf("Hello from C!\\n");
+    printf("Fibonacci(10) = %d\\n", fibonacci(10));
+    return 0;
+}`,
+  rs: `fn fibonacci(n: u32) -> u32 {
+    if n <= 1 { return n; }
+    fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+fn main() {
+    println!("Hello from Rust!");
+    println!("Fibonacci(10) = {}", fibonacci(10));
+}`,
+  go: `package main
+
+import "fmt"
+
+func fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n-1) + fibonacci(n-2)
+}
+
+func main() {
+    fmt.Println("Hello from Go!")
+    fmt.Printf("Fibonacci(10) = %d\\n", fibonacci(10))
+}`,
+  rb: `def fibonacci(n)
+  return n if n <= 1
+  fibonacci(n - 1) + fibonacci(n - 2)
+end
+
+puts "Hello from Ruby!"
+puts "Fibonacci(10) = #{fibonacci(10)}"`,
+  php: `<?php
+function fibonacci($n) {
+    if ($n <= 1) return $n;
+    return fibonacci($n - 1) + fibonacci($n - 2);
+}
+
+echo "Hello from PHP!\\n";
+echo "Fibonacci(10) = " . fibonacci(10) . "\\n";`,
 };
 
-type LanguageType = keyof typeof DEFAULT_CODE;
+type LanguageType = string;
 
 export default function PlaygroundView() {
   const trpc = useTRPC();
   const { data: apiKeys } = useSuspenseQuery(trpc.apiKey.list.queryOptions());
 
   const [language, setLanguage] = useState<LanguageType>("py");
-  const [code, setCode] = useState(DEFAULT_CODE.py);
+  const [code, setCode] = useState(DEFAULT_CODE.py ?? "");
   const [output, setOutput] = useState<string>("Ready to execute...");
   const [isRunning, setIsRunning] = useState(false);
 
@@ -70,7 +135,7 @@ export default function PlaygroundView() {
 
   const handleLanguageChange = (lang: LanguageType) => {
     setLanguage(lang);
-    setCode(DEFAULT_CODE[lang]);
+    setCode(DEFAULT_CODE[lang] ?? "");
     setOutput("Ready to execute...");
   };
 
@@ -272,13 +337,7 @@ export default function PlaygroundView() {
               </div>
               <span className="text-muted-foreground text-xs">
                 main.
-                {language === "py"
-                  ? "py"
-                  : language === "js"
-                    ? "js"
-                    : language === "java"
-                      ? "java"
-                      : "cpp"}
+                {LANGUAGES.find((l) => l.id === language)?.id ?? language}
               </span>
             </div>
             <div className="flex items-center gap-2">
