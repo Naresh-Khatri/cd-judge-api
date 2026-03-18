@@ -1,17 +1,22 @@
-import { execSync } from "child_process";
+import { exec as execCb } from "child_process";
 import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
+import { promisify } from "util";
 
 import LANGUAGE_CONFIGS from "../config/languages";
-import { SUPPORTED_LANGS } from "../constants";
 import {
-  ExecutionOptions,
-  ExecutionResult,
-  Language,
-  LanguageConfig,
-} from "../types";
+  MAX_CODE_SIZE_BYTES,
+  MAX_STDIN_SIZE_BYTES,
+  MAX_STDOUT_SIZE_BYTES,
+} from "../config/limits";
+import { SUPPORTED_LANGS } from "../constants";
+import { ExecutionOptions, ExecutionResult, Language } from "../types";
+import { parseErrorLineNumber } from "./line-number-parser";
 import { metadataParser } from "./metadata-parser";
+import { preprocessCode } from "./preprocessors";
+
+const exec = promisify(execCb);
 
 type FilePaths = {
   workdir: string;
@@ -52,16 +57,16 @@ class IsolateRunner {
   }
 
   private async initializeWorkdir(boxId: number): Promise<void> {
-    // Initialize isolate box
-    const workdir = execSync(`isolate -b ${boxId} --init`).toString().trim();
+    const { stdout } = await exec(`isolate -b ${boxId} --init`, {
+      timeout: 10_000,
+    });
+    const workdir = stdout.trim();
     const boxdir = path.join(workdir, "box");
 
-    // Create a user-owned temporary directory for control files
     const tempDir = await fs.mkdtemp(
       path.join(os.tmpdir(), `isolate-${boxId}-`),
     );
 
-    // Define file paths in the temporary directory
     const files = {
       stdin: path.join(tempDir, this.STDIN_FILE),
       stdout: path.join(tempDir, this.STDOUT_FILE),
@@ -70,7 +75,6 @@ class IsolateRunner {
       compile: path.join(tempDir, this.COMPILE_OUTPUT_FILE),
     };
 
-    // Initialize all files
     await Promise.all(
       Object.values(files).map((file) => this.initializeFile(file)),
     );
@@ -78,99 +82,85 @@ class IsolateRunner {
     this.rootDir = { workdir, boxdir, tempDir, files };
   }
 
-  private async preprocessCode(lang: string, code: string): Promise<string> {
-    if (lang === "java") {
-      return code.replace(/public\s+class\s+(\w+)/g, (match, className) =>
-        className !== "main" ? match.replace(className, "main") : match,
-      );
+  /**
+   * Read a file, truncating to maxBytes if it exceeds the limit.
+   */
+  private async readTruncated(
+    filePath: string,
+    maxBytes: number = MAX_STDOUT_SIZE_BYTES,
+  ): Promise<string> {
+    const stat = await fs.stat(filePath).catch(() => null);
+    if (!stat) return "";
+    if (stat.size <= maxBytes) {
+      return fs.readFile(filePath, "utf8");
     }
-    return code;
+    const buf = Buffer.alloc(maxBytes);
+    const fh = await fs.open(filePath, "r");
+    try {
+      await fh.read(buf, 0, maxBytes, 0);
+      return buf.toString("utf8") + "\n...[output truncated]";
+    } finally {
+      await fh.close();
+    }
   }
-
-  private parseErrorLineNumber = (
-    stderr: string,
-    lang: Language,
-  ): number | null => {
-    let regex: RegExp;
-
-    switch (lang) {
-      case "java":
-        // Java stack trace looks like: "at ClassName.methodName(ClassName.java:lineNumber)"
-        regex = /([^:]+):(\d+)(?::\d+)?(?:\)|:)/;
-        break;
-      case "js":
-        // JavaScript error format: "at Object.<anonymous> (file.js:lineNumber:column)"
-        regex = /at .+\((.*\.js):(\d+):\d+\)/;
-        break;
-      case "py":
-        // Python error format: "File 'file.py', line lineNumber"
-        regex = /File "([^"]+)", line (\d+)/;
-        break;
-      case "cpp":
-        // C++ error format: "in function 'function' at file.cpp:lineNumber"
-        regex = /([^:]+):(\d+):\d+:/;
-        break;
-      default:
-        return null;
-    }
-
-    const match = stderr.match(regex);
-    if (match) {
-      if (match[2]) {
-        return parseInt(match[2], 10);
-      }
-    }
-
-    return null; // Return null if no line number is found
-  };
 
   async runCode({
     lang,
     code,
     stdin = "",
+    boxId,
     options = {},
   }: {
     lang: Language;
     code: string;
     stdin?: string;
+    /** Box ID allocated from the pool. */
+    boxId: number;
     options?: ExecutionOptions;
   }): Promise<ExecutionResult> {
-    const boxId = Math.floor(Math.random() * 1000); // Offset to avoid conflict with other ranges if any
-    let workdir: string = "";
     if (!SUPPORTED_LANGS.includes(lang)) {
       throw new Error(`Invalid language: ${lang}`);
     }
     if (code.trim().length === 0) {
       throw new Error(`Code is required`);
     }
+
+    // Input size validation
+    const codeBytes = Buffer.byteLength(code, "utf8");
+    if (codeBytes > MAX_CODE_SIZE_BYTES) {
+      throw new Error(
+        `Code size (${codeBytes} bytes) exceeds limit (${MAX_CODE_SIZE_BYTES} bytes)`,
+      );
+    }
+    const stdinBytes = Buffer.byteLength(stdin, "utf8");
+    if (stdinBytes > MAX_STDIN_SIZE_BYTES) {
+      throw new Error(
+        `Stdin size (${stdinBytes} bytes) exceeds limit (${MAX_STDIN_SIZE_BYTES} bytes)`,
+      );
+    }
+
     try {
       await this.initializeWorkdir(boxId);
 
-      // Write source code
       const langConfig = LANGUAGE_CONFIGS[lang];
       const sourceFile = path.join(this.rootDir.boxdir, langConfig.fileName);
-      await fs.writeFile(sourceFile, await this.preprocessCode(lang, code));
+      await fs.writeFile(sourceFile, preprocessCode(lang, code));
 
-      // Write stdin
       await fs.writeFile(this.rootDir.files.stdin, stdin, "utf8");
-      // console.warn(`
-      //  ----------------------------------------
-      //  INIT NEW SANDBOX AT ${boxId} ${this.rootDir.files.stdin} ${stdin}
-      //  ----------------------------------------`);
-      // await new Promise((resolve) => setTimeout(resolve, 20000));
+
       // Compile if needed
       if (langConfig.compileCommand) {
         const compileCmd = `isolate -s -b ${boxId} -M ${this.rootDir.files.metadata} \
           -t 30 -w 60 -k 64000 \
           -p30 \
-          -f 1000 \
+          -f 4096 \
           -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
         ${langConfig.opts} \
           --run \
         -- ${langConfig.compileCommand} 2> ${this.rootDir.files.compile}`;
 
         try {
-          execSync(compileCmd);
+          await exec(compileCmd, { timeout: 90_000 });
           const compileOutput = await fs.readFile(
             this.rootDir.files.compile,
             "utf8",
@@ -182,10 +172,20 @@ class IsolateRunner {
               memory: 0,
               stdout: "",
               stderr: compileOutput,
-              lineNumber: this.parseErrorLineNumber(compileOutput, lang),
+              lineNumber: parseErrorLineNumber(compileOutput, lang),
             };
           }
         } catch (error) {
+          // Check if this was an internal timeout
+          if (error instanceof Error && "killed" in error && error.killed) {
+            return {
+              verdict: "XX",
+              time: 0,
+              memory: 0,
+              stdout: "",
+              stderr: "Internal timeout: compilation took too long",
+            };
+          }
           const compileOutput = await fs.readFile(
             this.rootDir.files.compile,
             "utf8",
@@ -196,35 +196,36 @@ class IsolateRunner {
             memory: 0,
             stdout: "",
             stderr: compileOutput,
-            lineNumber: this.parseErrorLineNumber(compileOutput, lang),
+            lineNumber: parseErrorLineNumber(compileOutput, lang),
           };
         }
       }
 
+      const wallTimeLimit = (options.timeLimit || 1) + 1;
+
       // Run the code
-      const runCmd = `isolate -b ${boxId}  -M ${this.rootDir.files.metadata} -s \
+      // -m flag: memory limit in KB (default 12 MB = 12 * 1024 * 1024 KB).
+      // isolate's -m takes the value in KB.
+      const runCmd = `isolate -b ${boxId} -M ${this.rootDir.files.metadata} -s \
         -t ${options.timeLimit || 1} \
         -p${options.subProcessLimit || 20} \
-        -w ${(options.timeLimit || 1) + 1} \
+        -w ${wallTimeLimit} \
         -m ${options.memoryLimit || 12 * 1024 * 1024} \
         ${langConfig.opts} \
         --run \
         -- ${langConfig.runCommand} < ${this.rootDir.files.stdin} > ${this.rootDir.files.stdout} 2> ${this.rootDir.files.stderr}`;
-      // console.log("cmd: ==============================", runCmd);
-      execSync(runCmd);
 
-      // Read results
-      const metadataContent = execSync(
-        `cat ${this.rootDir.files.metadata}`,
-      ).toString();
+      await exec(runCmd, { timeout: (wallTimeLimit + 5) * 1000 });
 
-      const metadata = metadataParser(metadataContent);
-
-      const stdout = await fs.readFile(this.rootDir.files.stdout, "utf8");
-      const stderr = await fs.readFile(
-        this.rootDir.files.stderr ?? metadata.message,
+      // Read metadata file
+      const metadataContent = await fs.readFile(
+        this.rootDir.files.metadata,
         "utf8",
       );
+      const metadata = metadataParser(metadataContent);
+
+      const stdout = await this.readTruncated(this.rootDir.files.stdout);
+      const stderr = await this.readTruncated(this.rootDir.files.stderr);
 
       return {
         verdict: metadata.exitcode === 0 ? "OK" : metadata.status || "RE",
@@ -233,23 +234,52 @@ class IsolateRunner {
         exitCode: metadata.exitcode,
         exitSignal: metadata.exitsig,
         errorType: metadata.status,
-        stdout: stdout,
-        stderr: stderr,
+        stdout,
+        stderr,
+        cgMemory: metadata["cg-mem"],
+        wallTime: metadata["time-wall"]
+          ? metadata["time-wall"] * 1000
+          : undefined,
+        cswForced: metadata["csw-forced"],
+        cswVoluntary: metadata["csw-voluntary"],
+        cgOomKilled: metadata["cg-oom-killed"],
       };
     } catch (error) {
-      // console.log("--------------------------------");
-      // console.log(error);
-      // console.log("------------------------------");
+      // Check if this was an internal timeout
+      if (error instanceof Error && "killed" in error && error.killed) {
+        return {
+          verdict: "XX",
+          time: 0,
+          memory: 0,
+          stdout: "",
+          stderr: "Internal timeout: sandbox process exceeded system time limit",
+        };
+      }
 
-      const metadataContent = execSync(
-        `cat ${this.rootDir.files.metadata}`,
-      ).toString();
+      let metadataContent = "";
+      try {
+        metadataContent = await fs.readFile(
+          this.rootDir.files.metadata,
+          "utf8",
+        );
+      } catch {
+        // metadata file may not exist if init failed
+      }
+
+      if (!metadataContent.trim()) {
+        return {
+          verdict: "XX",
+          time: 0,
+          memory: 0,
+          stdout: "",
+          stderr: "Internal error: failed to read execution metadata",
+        };
+      }
 
       const metadata = metadataParser(metadataContent);
-      // console.log("metadata: ", metadata);
 
-      let stdout = await fs.readFile(this.rootDir.files.stdout, "utf8");
-      let stderr = await fs.readFile(this.rootDir.files.stderr, "utf8");
+      let stdout = await this.readTruncated(this.rootDir.files.stdout);
+      let stderr = await this.readTruncated(this.rootDir.files.stderr);
 
       if (metadata.status === "RE") {
         stderr = stderr || metadata.message || "Runtime Error";
@@ -258,33 +288,35 @@ class IsolateRunner {
       } else if (metadata.status === "SG") {
         stderr = "Memory limit exceeded";
       } else if (metadata.status === "XX") {
-        stderr = metadata.message || "Internal Error Error";
+        stderr = metadata.message || "Internal Error";
       }
 
       return {
         verdict: metadata.exitcode === 0 ? "OK" : metadata.status || "RE",
-        // time: 0,
-        // memory: 0,
-        // exitCode: 0,
-        // exitSignal: 0,
         time: (metadata.time || 0) * 1000,
         memory: metadata["max-rss"] || 0,
         exitCode: metadata.exitcode || 0,
         exitSignal: metadata.exitsig || 0,
         errorType: "Runtime Error",
-        stdout: stdout,
+        stdout,
         stderr: stderr || "",
-        lineNumber: this.parseErrorLineNumber(stderr, lang),
+        lineNumber: parseErrorLineNumber(stderr, lang),
+        cgMemory: metadata["cg-mem"],
+        wallTime: metadata["time-wall"]
+          ? metadata["time-wall"] * 1000
+          : undefined,
+        cswForced: metadata["csw-forced"],
+        cswVoluntary: metadata["csw-voluntary"],
+        cgOomKilled: metadata["cg-oom-killed"],
       };
     } finally {
-      // Cleanup
-      if (boxId) {
-        try {
-          execSync(`isolate -b ${boxId} --cleanup`);
-        } catch (error) {
-          console.error("Cleanup failed:", error);
-        }
+      // Cleanup isolate box
+      try {
+        await exec(`isolate -b ${boxId} --cleanup`, { timeout: 10_000 });
+      } catch (error) {
+        console.error("Cleanup failed:", error);
       }
+      // Cleanup temp directory
       if (this.rootDir.tempDir) {
         try {
           await fs.rm(this.rootDir.tempDir, { recursive: true, force: true });
