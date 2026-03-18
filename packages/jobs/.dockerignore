@@ -1,0 +1,9 @@
+node_modules
+dist
+.cache
+.turbo
+*.test.ts
+__tests__
+vitest.config.ts
+vitest.integration.config.ts
+ENHANCEMENT_PLAN.md
