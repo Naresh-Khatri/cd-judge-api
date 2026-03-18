@@ -10,16 +10,22 @@
   },
   "license": "MIT",
   "scripts": {
+    "with-env": "dotenv -e ../../.env --",
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint --flag unstable_native_nodejs_ts_config",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "start:worker": "tsx src/worker.ts"
   },
   "dependencies": {
+    "@t3-oss/env-core": "^0.13.8",
     "bullmq": "^5.4.0",
-    "ioredis": "^5.3.2"
+    "ioredis": "^5.3.2",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@acme/eslint-config": "workspace:*",
@@ -28,7 +34,8 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "^3.2.1"
   },
   "prettier": "@acme/prettier-config"
 }
