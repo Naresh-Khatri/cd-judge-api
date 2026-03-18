@@ -10,9 +10,10 @@
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
-    "auth:generate": "pnpm -F @acme/auth generate",
-    "db:push": "turbo -F @acme/db push",
-    "db:studio": "turbo -F @acme/db studio",
+    "auth:generate": "pnpm with-env pnpx @better-auth/cli generate --output packages/db/src/auth-schema.ts",
+    "with-env": "dotenv -e .env --",
+    "db:push": "pnpm with-env turbo -F @acme/db push",
+    "db:studio": "pnpm with-env turbo -F @acme/db studio",
     "dev": "turbo watch dev --continue",
     "dev:next": "turbo watch dev -F @acme/nextjs...",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
@@ -23,7 +24,8 @@
     "postinstall": "pnpm lint:ws",
     "typecheck": "turbo run typecheck",
     "ui-add": "turbo run ui-add",
-    "test:load": "k6 run load-tests/playground-stress.js"
+    "test:load": "k6 run load-tests/playground-stress.js",
+    "test:load:ramp": "k6 run load-tests/throughput-ramp.js"
   },
   "devDependencies": {
     "@acme/prettier-config": "workspace:*",
@@ -33,11 +35,6 @@
     "turbo": "^2.6.3",
     "typescript": "catalog:"
   },
-  "pnpm": {
-    "overrides": {
-      "@sinclair/typebox": "0.32.4"
-    }
-  },
-  "prettier": "@acme/prettier-config"
+"prettier": "@acme/prettier-config"
 }
 

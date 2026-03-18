@@ -19,10 +19,32 @@ services:
       - POSTGRES_URL=postgres://dev:dev@db:5432/cd-judge
       - REDIS_URL=redis://redis:6379
     command: pnpm dev
-    privileged: true
     depends_on:
       - db
       - redis
+    networks:
+      - cd-judge-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: packages/jobs/Dockerfile
+    container_name: cd-judge-worker
+    restart: unless-stopped
+    # isolate needs cgroup access for sandboxing
+    privileged: true
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=development
+      - WORKER_CONCURRENCY=10
+    volumes:
+      # Mount source for live changes in dev (read-only)
+      - ./packages/jobs/src:/app/packages/jobs/src:ro
+    networks:
+      - cd-judge-network
 
 # Inherited from base, no need to redefine unless overriding
-# volumes: ... 
+# volumes: ...

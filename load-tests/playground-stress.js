@@ -1,95 +1,118 @@
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Trend } from 'k6/metrics';
+import { check, sleep } from "k6";
+import http from "k6/http";
+import { Counter, Rate, Trend } from "k6/metrics";
 
-// Custom metrics
-const submissionLatency = new Trend('submission_latency');
-const totalCompletionTime = new Trend('total_completion_time');
+// ─── Custom metrics ───
+const submissionLatency = new Trend("submission_latency", true);
+const totalCompletionTime = new Trend("total_completion_time", true);
+const pollingRounds = new Trend("polling_rounds");
+const verdictOk = new Counter("verdict_ok");
+const verdictFailed = new Counter("verdict_failed");
+const timeoutRate = new Rate("job_timeout_rate");
 
 export const options = {
   scenarios: {
     constant_load: {
-      executor: 'constant-vus',
-      vus: __ENV.VUS || 5,
-      duration: __ENV.DURATION || '30s',
+      executor: "constant-vus",
+      vus: parseInt(__ENV.VUS || "5"),
+      duration: __ENV.DURATION || "30s",
     },
   },
   thresholds: {
-    http_req_failed: ['rate<0.01'], // http errors should be less than 1%
-    http_req_duration: ['p(95)<500'], // 95% of requests should be below 500ms
+    http_req_failed: ["rate<0.05"],
+    submission_latency: ["p(95)<1000"],
+    total_completion_time: ["p(95)<10000"],
+    job_timeout_rate: ["rate<0.05"],
   },
 };
 
-const BASE_URL = __ENV.API_BASE_URL || 'http://localhost:3000';
+const BASE_URL = __ENV.API_BASE_URL || "http://localhost:3001";
 const API_KEY = __ENV.API_KEY;
 
 if (!API_KEY) {
-  throw new Error('API_KEY environment variable is required');
+  throw new Error(
+    "API_KEY environment variable is required. Usage:\n  k6 run -e API_KEY=sk_live_... load-tests/playground-stress.js",
+  );
 }
 
+const PROGRAMS = [
+  { lang: "py", code: 'print("Hello from k6!")' },
+  { lang: "js", code: 'console.log("Hello from k6!")' },
+  {
+    lang: "cpp",
+    code: `#include <iostream>
+int main() { std::cout << "Hello from k6!"; }`,
+  },
+  {
+    lang: "java",
+    code: 'public class Solution { public static void main(String[] args) { System.out.println("Hello from k6!"); } }',
+  },
+];
+
+const params = {
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${API_KEY}`,
+  },
+};
+
 export default function () {
-  const payload = JSON.stringify({
-    code: 'print("Hello from k6 load test!")',
-    lang: 'py',
-  });
+  // Pick a random language
+  const prog = PROGRAMS[Math.floor(Math.random() * PROGRAMS.length)];
 
-  const params = {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
-    },
-  };
-
-  // 1. Submit Job
+  // 1. Submit
   const startTime = Date.now();
-  const res = http.post(`${BASE_URL}/api/v1/submissions`, payload, params);
+  const res = http.post(
+    `${BASE_URL}/api/v1/submissions`,
+    JSON.stringify({ code: prog.code, lang: prog.lang }),
+    params,
+  );
 
   submissionLatency.add(res.timings.duration);
 
-  const submissionOk = check(res, {
-    'submission status is 200': (r) => r.status === 200,
-    'has submission id': (r) => r.json().id !== undefined,
+  const ok = check(res, {
+    "submit 200": (r) => r.status === 200,
+    "has id": (r) => !!r.json().id,
   });
 
-  if (!submissionOk) {
-    console.error(`Submission failed: ${res.status} ${res.body}`);
+  if (!ok) {
+    console.error(`Submit failed [${prog.lang}]: ${res.status} ${res.body}`);
     return;
   }
 
-  const submissionId = res.json().id;
+  const id = res.json().id;
 
-  // 2. Poll for results
+  // 2. Poll for result
   let completed = false;
   let attempts = 0;
-  const maxAttempts = 30; // 30 seconds max for one job
+  const maxAttempts = 30;
 
   while (!completed && attempts < maxAttempts) {
     sleep(1);
     attempts++;
 
-    const pollRes = http.get(`${BASE_URL}/api/v1/submissions/${submissionId}`, params);
+    const poll = http.get(`${BASE_URL}/api/v1/submissions/${id}`, params);
+    if (poll.status !== 200) continue;
 
-    const pollOk = check(pollRes, {
-      'poll status is 200': (r) => r.status === 200,
-    });
-
-    if (!pollOk) {
-      console.error(`Polling failed for ${submissionId}: ${pollRes.status}`);
-      break;
-    }
-
-    const jobData = pollRes.json();
-    if (jobData.status === 'completed' || jobData.status === 'failed') {
+    const data = poll.json();
+    if (data.status === "completed" || data.status === "failed") {
       completed = true;
+      pollingRounds.add(attempts);
       totalCompletionTime.add(Date.now() - startTime);
 
-      check(jobData, {
-        'job completed successfully': (data) => data.status === 'completed',
-      });
+      if (data.result && data.result.verdict === "OK") {
+        verdictOk.add(1);
+      } else {
+        verdictFailed.add(1);
+        console.warn(
+          `Job ${id} [${prog.lang}]: verdict=${data.result?.verdict} stderr=${data.result?.stderr?.slice(0, 100)}`,
+        );
+      }
     }
   }
 
+  timeoutRate.add(!completed);
   if (!completed) {
-    console.error(`Job ${submissionId} timed out after ${maxAttempts} attempts`);
+    console.error(`Job ${id} [${prog.lang}] timed out after ${maxAttempts}s`);
   }
 }

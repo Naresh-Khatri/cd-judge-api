@@ -4,7 +4,7 @@ services:
     container_name: cd-judge-db
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,13 +17,15 @@ services:
       - POSTGRES_USER=dev
       - POSTGRES_PASSWORD=dev
       - POSTGRES_DB=cd-judge
+    networks:
+      - cd-judge-network
 
   redis:
     image: redis:7-alpine
     container_name: cd-judge-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -32,6 +34,8 @@ services:
       timeout: 5s
       retries: 5
     command: redis-server --appendonly yes --maxmemory 256mb
+    networks:
+      - cd-judge-network
 
 volumes:
   postgres_data:
