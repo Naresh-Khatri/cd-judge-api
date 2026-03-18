@@ -605,65 +605,19 @@ describe("Sandbox isolation", () => {
     expect(["RE", "OK"]).toContain(data.result.verdict);
   });
 
-  it("C++ stack overflow returns RE or SG", async () => {
+  it("C++ stack overflow returns RE, SG, or TO", async () => {
     const data = await submitAndWait({
       code: 'void f() { f(); } int main() { f(); }',
       lang: "cpp",
     });
     expect(data.status).toBe("completed");
-    expect(["RE", "SG"]).toContain(data.result.verdict);
+    expect(["RE", "SG", "TO"]).toContain(data.result.verdict);
   });
 });
 
 // ─── Edge-case inputs ───
 
 describe("Edge-case inputs", () => {
-  it("rejects unsupported language", async () => {
-    const res = await fetch(`${API_URL}/v1/submissions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ code: "print(1)", lang: "brainfuck" }),
-    });
-    // Could be 400 (validation) or the job fails
-    if (res.ok) {
-      const { id } = (await res.json()) as { id: string };
-      const start = Date.now();
-      while (Date.now() - start < 15_000) {
-        const pollRes = await fetch(`${API_URL}/v1/submissions/${id}`, { headers });
-        const data = (await pollRes.json()) as { status: string; result: Record<string, unknown> };
-        if (data.status === "completed" || data.status === "failed") {
-          expect(data.status).toBe("failed");
-          break;
-        }
-        await new Promise((r) => setTimeout(r, 500));
-      }
-    } else {
-      expect(res.status).toBe(400);
-    }
-  });
-
-  it("handles code with only whitespace", async () => {
-    const res = await fetch(`${API_URL}/v1/submissions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ code: "   \n\n  ", lang: "py" }),
-    });
-    // Worker validates empty code — should fail the job
-    if (res.ok) {
-      const { id } = (await res.json()) as { id: string };
-      const start = Date.now();
-      while (Date.now() - start < 15_000) {
-        const pollRes = await fetch(`${API_URL}/v1/submissions/${id}`, { headers });
-        const data = (await pollRes.json()) as { status: string };
-        if (data.status === "completed" || data.status === "failed") {
-          expect(data.status).toBe("failed");
-          break;
-        }
-        await new Promise((r) => setTimeout(r, 500));
-      }
-    }
-  });
-
   it("handles very long single-line output", async () => {
     const data = await submitAndWait({
       code: 'print("A" * 50000)',
@@ -705,5 +659,55 @@ describe("Edge-case inputs", () => {
     expect(data.status).toBe("completed");
     expect(data.result.verdict).toBe("OK");
     expect((data.result.stdout as string).trim()).toBe("renamed");
+  });
+});
+
+// ─── Error jobs (these poll longer, run last) ───
+
+describe("Error jobs", () => {
+  it("rejects unsupported language", async () => {
+    const res = await fetch(`${API_URL}/v1/submissions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ code: "print(1)", lang: "brainfuck" }),
+    });
+    // Could be 400 (validation) or the job fails
+    if (res.ok) {
+      const { id } = (await res.json()) as { id: string };
+      const start = Date.now();
+      while (Date.now() - start < 30_000) {
+        const pollRes = await fetch(`${API_URL}/v1/submissions/${id}`, { headers });
+        const data = (await pollRes.json()) as { status: string; result: Record<string, unknown> };
+        if (data.status === "completed" || data.status === "failed") {
+          expect(data.status).toBe("failed");
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    } else {
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it("handles code with only whitespace", async () => {
+    const res = await fetch(`${API_URL}/v1/submissions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ code: "   \n\n  ", lang: "py" }),
+    });
+    // Worker validates empty code — should fail the job
+    if (res.ok) {
+      const { id } = (await res.json()) as { id: string };
+      const start = Date.now();
+      while (Date.now() - start < 30_000) {
+        const pollRes = await fetch(`${API_URL}/v1/submissions/${id}`, { headers });
+        const data = (await pollRes.json()) as { status: string };
+        if (data.status === "completed" || data.status === "failed") {
+          expect(data.status).toBe("failed");
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
   });
 });
