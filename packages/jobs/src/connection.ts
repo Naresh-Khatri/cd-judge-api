@@ -1,7 +1,7 @@
 import { Redis } from "ioredis";
 
-const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+import { env } from "./config/env";
 
-export const connection = new Redis(redisUrl, {
+export const connection = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
 });
