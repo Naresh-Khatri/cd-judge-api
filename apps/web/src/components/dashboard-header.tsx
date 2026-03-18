@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, Menu, Search } from "lucide-react";
 
-import { authClient } from "~/auth/client";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
+import { authClient } from "~/lib/auth/client";
 import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
 
 interface DashboardHeaderProps {
@@ -28,10 +28,10 @@ export function DashboardHeader({ onOpenMobileSidebar }: DashboardHeaderProps) {
   const user = session?.user;
   const userInitials = user?.name
     ? user.name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
     : "??";
 
   const handleLogout = async () => {
@@ -91,7 +91,10 @@ export function DashboardHeader({ onOpenMobileSidebar }: DashboardHeaderProps) {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings" className="w-full cursor-pointer">
+              <Link
+                href="/dashboard/settings"
+                className="w-full cursor-pointer"
+              >
                 Settings
               </Link>
             </DropdownMenuItem>

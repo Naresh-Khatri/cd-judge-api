@@ -3,10 +3,10 @@
 import { redirect } from "next/navigation";
 import { Clock, Code2, Shield, Zap } from "lucide-react";
 
-import { authClient } from "~/auth/client";
 import { GitHubStarsButton } from "~/components/github-button";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
+import { authClient } from "~/lib/auth/client";
 
 export default function HomePage() {
   const { data: session } = authClient.useSession();

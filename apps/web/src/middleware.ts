@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { auth } from "~/auth/server";
+import { auth } from "./lib/auth/server";
 
 export const runtime = "nodejs";
 

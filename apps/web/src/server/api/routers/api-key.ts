@@ -20,12 +20,10 @@ function generateApiKey(): string {
   return `sk_live_${crypto.randomBytes(32).toString("hex")}`;
 }
 
-// Hash an API key for secure storage
 function hashApiKey(key: string): string {
   return crypto.createHash("sha256").update(key).digest("hex");
 }
 
-// Extract prefix from API key for display
 function getKeyPrefix(key: string): string {
   return key.substring(0, 16) + "...";
 }
@@ -58,12 +56,10 @@ export const apiKeyRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Generate a new API key
       const key = generateApiKey();
       const keyHash = hashApiKey(key);
       const prefix = getKeyPrefix(key);
 
-      // Insert into database
       const [newKey] = await ctx.db
         .insert(apiKey)
         .values({
@@ -81,10 +77,9 @@ export const apiKeyRouter = {
           createdAt: apiKey.createdAt,
         });
 
-      // Return the full key (only time it's ever shown)
       return {
         ...newKey,
-        key, // Full key - only returned on creation
+        key,
       };
     }),
 
@@ -93,14 +88,12 @@ export const apiKeyRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Update the key status to revoked
       const [updated] = await ctx.db
         .update(apiKey)
         .set({ status: "revoked" })
         .where(eq(apiKey.id, input.id))
         .returning();
 
-      // Verify the key belongs to the user
       if (updated?.userId !== userId) {
         throw new Error("Unauthorized");
       }
@@ -113,7 +106,6 @@ export const apiKeyRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // First verify ownership
       const [existing] = await ctx.db
         .select()
         .from(apiKey)
@@ -123,7 +115,6 @@ export const apiKeyRouter = {
         throw new Error("Unauthorized");
       }
 
-      // Delete the key
       await ctx.db.delete(apiKey).where(eq(apiKey.id, input.id));
 
       return { success: true };
@@ -139,7 +130,6 @@ export const apiKeyRouter = {
       startDate.setDate(startDate.getDate() - daysCount);
       const startDateStr = startDate.toISOString().split("T")[0]!;
 
-      // Fetch usage for all keys belonging to this user
       const results = await ctx.db
         .select({
           day: apiKeyUsage.day,

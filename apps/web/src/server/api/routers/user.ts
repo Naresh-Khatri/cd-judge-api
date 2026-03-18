@@ -24,8 +24,6 @@ export const userRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Note: Changing email might require re-verification depending on auth setup
-      // For now we just update it in the database
       const [updated] = await ctx.db
         .update(user)
         .set({
@@ -61,9 +59,8 @@ export const userRouter = {
     }),
 
   getSessions: protectedProcedure.query(async ({ ctx }) => {
-    // Using Better Auth API to list sessions
     const sessions = await ctx.authApi.listSessions({
-      headers: new Headers(), // Empty headers as we're calling from server
+      headers: new Headers(),
     });
     return sessions;
   }),
@@ -87,7 +84,6 @@ export const userRouter = {
 
     const currentToken = ctx.session.session.token;
 
-    // Revoke all sessions except the current one
     const promises = sessions
       .filter((s) => s.token !== currentToken)
       .map((s) =>
@@ -106,7 +102,6 @@ export const userRouter = {
   deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    // Delete user from database - cascade will handle related data
     await ctx.db.delete(user).where(eq(user.id, userId));
 
     return { success: true };
