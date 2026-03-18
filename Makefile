@@ -1,22 +1,30 @@
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  make dev                - Start development environment (turbo + worker)"
-	@echo "  make prod               - Start production environment"
-	@echo "  make services           - Start ONLY dependencies (db, redis) for local dev"
-	@echo "  make worker             - Start ONLY worker container (+ dependencies)"
-	@echo "  make down               - Stop all containers"
-	@echo "  make logs               - Follow container logs"
-	@echo "  make logs-worker        - Follow worker container logs"
-	@echo "  make clean              - Stop containers (preserves data)"
-	@echo "  make dangerously-clean  - Stop containers AND DELETE ALL DATA"
-	@echo "  make rebuild-worker     - Rebuild worker image from scratch"
+	@echo ""
+	@echo "  Local development (run web with pnpm dev separately):"
+	@echo "    make services           - Start db + redis containers"
+	@echo "    make worker             - Start worker container"
+	@echo ""
+	@echo "  Production:"
+	@echo "    make web                - Build & start web app container"
+	@echo "    make prod               - Start everything (services + worker + web)"
+	@echo ""
+	@echo "  Docker-based development (all in containers):"
+	@echo "    make dev                - Start turbo dev + worker in containers"
+	@echo ""
+	@echo "  Management:"
+	@echo "    make down               - Stop all containers"
+	@echo "    make logs               - Follow all container logs"
+	@echo "    make logs-worker        - Follow worker logs"
+	@echo "    make logs-web           - Follow web app logs"
+	@echo "    make rebuild-worker     - Rebuild worker image from scratch"
+	@echo "    make rebuild-web        - Rebuild web image from scratch"
+	@echo "    make clean              - Stop containers (preserves data)"
+	@echo "    make dangerously-clean  - Stop containers AND DELETE ALL DATA"
 
-dev:
-	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up -d
-
-prod:
-	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build
+# ─── Local development ───────────────────────────────────────────────────────
+# Run services + worker in Docker, then run `pnpm dev` on the host.
 
 services:
 	docker compose -f docker-compose.base.yml up -d db redis
@@ -24,9 +32,31 @@ services:
 worker:
 	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up -d worker
 
+# ─── Production ──────────────────────────────────────────────────────────────
+# Assumes services + worker are already running.
+
+web:
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build app
+
+prod:
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d --build
+
+# ─── Docker-based development ────────────────────────────────────────────────
+
+dev:
+	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up -d
+
+# ─── Rebuild ─────────────────────────────────────────────────────────────────
+
 rebuild-worker:
 	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml build --no-cache worker
 	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up -d worker
+
+rebuild-web:
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml build --no-cache app
+	docker compose -f docker-compose.base.yml -f docker-compose.prod.yml up -d app
+
+# ─── Management ──────────────────────────────────────────────────────────────
 
 down:
 	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml -f docker-compose.prod.yml down --remove-orphans
@@ -36,6 +66,9 @@ logs:
 
 logs-worker:
 	docker compose logs -f worker
+
+logs-web:
+	docker compose logs -f app
 
 clean:
 	docker compose -f docker-compose.base.yml -f docker-compose.dev.yml down --remove-orphans

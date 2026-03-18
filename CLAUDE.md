@@ -44,9 +44,16 @@ pnpm build             # Build all packages
 # Auth
 pnpm auth:generate     # Generate Better Auth schema
 
-# Docker
-make dev               # Full docker compose dev environment
-make down              # Stop containers
+# Docker — local dev (run pnpm dev on host)
+make services          # Start db + redis containers
+make worker            # Start worker container
+
+# Docker — production
+make web               # Build & start web app container
+make prod              # Start everything (services + worker + web)
+
+# Docker — management
+make down              # Stop all containers
 make dangerously-clean # Stop containers AND delete volumes
 ```
 

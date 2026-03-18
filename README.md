@@ -1,163 +1,166 @@
 # CD Judge
 
-**CD Judge** is a secure, multi-language code execution engine and online judge platform featuring a sandboxed runner, interactive playground, and integrated performance analytics.
+A free, open-source code execution engine and online judge platform. Run code securely across 10 programming languages in isolated Linux sandboxes with 10x Judge0 limits.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15
-- **Database**: PG with Drizzle ORM
-- **Authentication**: Better Auth
-- **API**: tRPC
-- **UI**: React 19 with Tailwind CSS v4
-- **Monorepo**: Turborepo with pnpm
+- **Frontend**: Next.js 15, React 19, Tailwind CSS v4, shadcn/ui
+- **API**: Hono REST API with OpenAPI spec + tRPC for dashboard
+- **Database**: PostgreSQL with Drizzle ORM
+- **Queue**: BullMQ (Redis)
+- **Auth**: Better Auth (GitHub/Google OAuth)
+- **Sandbox**: Linux isolate (cgroup v2)
+- **Monorepo**: Turborepo + pnpm workspaces
 
-## Getting Started
+## Supported Languages
+
+Python 3, Node.js, TypeScript, Java 17, C++ 17, C, Rust, Go, Ruby, PHP
+
+## Quick Start
 
 ### Prerequisites
 
-- Node.js ^23
-- pnpm ^10.19.0
+- Node.js ^23, pnpm ^10.19
+- Docker (for PostgreSQL, Redis, and the worker container)
+- Linux with cgroup v2 (for the worker/sandbox)
 
-### Installation
-
-1. Install dependencies:
-
-   ```bash
-   pnpm install
-   ```
-
-2. Setup environment:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Start required services (Database & Redis):
-
-   ```bash
-   make services
-   ```
-
-4. Initialize database and auth:
-   ```bash
-   pnpm db:push
-   pnpm auth:generate
-   ```
-
-### Development
-
-Run the full stack in development mode:
+### Setup
 
 ```bash
-pnpm dev
+pnpm install
+cp .env.example .env
 ```
 
-Or run only the web application (ensure services are running):
+### Local Development
+
+Start services (db + redis) and the worker container, then run the web app on the host:
 
 ```bash
-pnpm dev:next
+make services          # Start PostgreSQL + Redis
+make worker            # Start worker container (isolate sandbox)
+pnpm db:push           # Push schema to database (first time only)
+pnpm dev               # Start Next.js dev server
 ```
 
-### Available Scripts
+The app runs at `http://localhost:3000` with the API at `/api`.
 
-- `pnpm build` - Build all apps
-- `pnpm dev` - Start development servers
-- `pnpm lint` - Lint all packages
-- `pnpm format` - Format code with Prettier
-- `pnpm typecheck` - Type check all packages
-- `pnpm db:studio` - Open Drizzle Studio
+### Production
 
-## API Documentation
-
-The Submissions API allows you to execute code in various programming languages and retrieve results asynchronously.
-
-### Authentication
-
-All requests require a `Bearer` token in the `Authorization` header.
-
-```http
-Authorization: Bearer <your_api_key_or_session_token>
+```bash
+make services          # Start PostgreSQL + Redis
+make worker            # Start worker container
+make web               # Build & start Next.js in production container
 ```
 
-- **API Key**: Secret key from your dashboard.
-- **Session Token**: Internal usage for the playground.
+Or start everything at once:
 
----
+```bash
+make prod              # Start all containers (services + worker + web)
+```
 
-### 1. Submit Code for Execution
+## Make Commands
 
-`POST /api/v1/submissions`
+| Command | Description |
+|---------|-------------|
+| `make services` | Start db + redis containers |
+| `make worker` | Start worker container |
+| `make web` | Build & start web app container (production) |
+| `make prod` | Start everything (services + worker + web) |
+| `make dev` | Start all in Docker (turbo dev + worker) |
+| `make down` | Stop all containers |
+| `make logs` | Follow all container logs |
+| `make logs-worker` | Follow worker logs |
+| `make logs-web` | Follow web app logs |
+| `make rebuild-worker` | Rebuild worker image from scratch |
+| `make rebuild-web` | Rebuild web image from scratch |
+| `make clean` | Stop containers (preserves data) |
+| `make dangerously-clean` | Stop containers AND delete all data |
 
-**Request Body:**
+## pnpm Scripts
 
-| Field  | Type     | Description                                           |
-| :----- | :------- | :---------------------------------------------------- |
-| `code` | `string` | The source code to be executed.                       |
-| `lang` | `string` | The programming language (`py`, `js`, `java`, `cpp`). |
+| Script | Description |
+|--------|-------------|
+| `pnpm dev` | Start all dev servers (turbo watch) |
+| `pnpm dev:next` | Start only the web app |
+| `pnpm build` | Build all packages |
+| `pnpm lint` | ESLint all packages |
+| `pnpm format` | Check formatting (Prettier) |
+| `pnpm typecheck` | TypeScript check all packages |
+| `pnpm db:push` | Push Drizzle schema to database |
+| `pnpm db:studio` | Open Drizzle Studio |
 
-**Example:**
+## API
+
+Interactive API docs are available at `/api/docs` (Scalar UI). OpenAPI spec at `/api/openapi.json`.
+
+### Submit Code
+
+```bash
+curl -X POST https://your-host/api/v1/submissions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"lang": "py", "code": "print(42)"}'
+```
+
+Returns `{"id": "123"}`. Poll for results:
+
+```bash
+curl https://your-host/api/v1/submissions/123 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Response
 
 ```json
 {
-  "code": "print('Hello, World!')",
-  "lang": "py"
-}
-```
-
-**Success Response (200 OK):**
-
-```json
-{
-  "id": "12345"
-}
-```
-
----
-
-### 2. Get Execution Status and Result
-
-`GET /api/v1/submissions/[id]`
-
-**Success Response (200 OK):**
-
-Returns the status and output of the job.
-
-- `status`: `waiting`, `active`, `completed`, or `failed`.
-- `result`: Execution details (verdict, stdout, stderr, time, memory).
-
-**Example Response:**
-
-```json
-{
-  "id": "12345",
+  "id": "123",
   "status": "completed",
   "result": {
     "verdict": "OK",
-    "stdout": "Hello, World!\n",
+    "stdout": "42\n",
     "stderr": "",
-    "exitCode": 0,
-    "time": 50,
-    "memory": 1048576
+    "time": 45,
+    "memory": 8192,
+    "exitCode": 0
   }
 }
 ```
 
+### Verdicts
+
+| Verdict | Meaning |
+|---------|---------|
+| `OK` | Successful execution |
+| `CE` | Compilation error |
+| `RE` | Runtime error |
+| `TO` | Time limit exceeded |
+| `SG` | Signal (segfault, etc.) |
+| `XX` | Internal error |
+
 ## Project Structure
 
 ```
-.
-├── apps
-│   └── web             # Next.js web application
-├── packages
-│   ├── api             # tRPC API definitions
-│   ├── auth            # Authentication configuration
-│   ├── db              # Database schema and client
-│   ├── jobs            # Job queue and logic
-│   ├── ui              # Shared UI components
-│   ├── validators      # Shared validation schemas
-└── tooling
-    ├── eslint          # ESLint configurations
-    ├── prettier        # Prettier configuration
-    ├── tailwind        # Tailwind CSS configuration
-    └── typescript      # TypeScript configurations
+├── apps/web              # Next.js frontend + API mount
+├── packages/
+│   ├── hono-api          # Hono REST API (OpenAPI + Scalar docs)
+│   ├── jobs              # BullMQ worker + IsolateRunner sandbox
+│   ├── db                # Drizzle ORM schema + PostgreSQL client
+│   ├── auth              # Better Auth (GitHub/Google OAuth)
+│   └── validators        # Shared Zod schemas
+└── tooling/              # Shared ESLint, Prettier, Tailwind, TS configs
 ```
+
+## Environment Variables
+
+See `.env.example` for all required variables. Key ones:
+
+- `POSTGRES_URL` — PostgreSQL connection string
+- `REDIS_URL` — Redis connection string
+- `BASE_URL` — App URL (e.g. `http://localhost:3000`)
+- `BETTER_AUTH_SECRET` — Auth secret key
+- `BETTER_AUTH_GITHUB_ID/SECRET` — GitHub OAuth credentials
+- `BETTER_AUTH_GOOGLE_ID/SECRET` — Google OAuth credentials
+
+## License
+
+MIT
