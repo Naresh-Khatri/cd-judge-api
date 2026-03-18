@@ -98,7 +98,7 @@ router.openapi(submitJobRoute, async (c) => {
   try {
     const job = await codeExecutionQueue.add("execute", {
       code,
-      language,
+      lang: language,
       userId: existingKey.userId,
     });
 
