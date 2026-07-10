@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     pkg-config \
     libsystemd-dev \
+    libseccomp-dev \
     libcap-dev \
     curl \
     ca-certificates && \
